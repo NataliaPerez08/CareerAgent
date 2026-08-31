@@ -7,9 +7,11 @@ by the global exception handler and returned as a 502.
 """
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.resume_parser import (
@@ -25,12 +27,15 @@ logger = logging.getLogger(__name__)
 
 API_V1 = "/api/v1"
 MAX_TEXT_LENGTH = 100_000
+STATIC_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(
     title="CareerAgent API",
-    version="0.5.0",
+    version="0.6.0",
     description="Evaluate a resume against a job description using a Strands agent.",
 )
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class EvaluationRequest(BaseModel):
@@ -49,6 +54,12 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     """Return 502 for any unexpected failure (model, network, runtime)."""
     logger.exception("Unhandled error while processing %s %s", request.method, request.url.path)
     return JSONResponse(status_code=502, content={"detail": "Agent execution failed."})
+
+
+@app.get("/", include_in_schema=False)
+def index() -> FileResponse:
+    """Serve the CareerAgent web UI."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health", tags=["health"], summary="Liveness check")

@@ -114,6 +114,22 @@ python -m app.cli --chat
 
 Resume files are validated before parsing: supported formats (`.pdf`, `.txt`), maximum size (`RESUME_MAX_SIZE_MB`, default 5 MB), empty and corrupt files are rejected, and image-only/scanned PDFs are reported instead of silently producing garbage.
 
+## Run the web UI
+
+The fastest way to use CareerAgent — no CLI needed:
+
+```bash
+make run
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+The flow is four steps: paste your resume (or upload a PDF/TXT), paste the job description, press **Analyze**, and read the result. A **Load example** button fills both inputs for an instant demo (the full evaluation takes ~30–60 seconds). The result shows the recommendation (`APPLY` / `MAYBE` / `SKIP`), match score, matched and missing skills grouped by severity, resume evidence, skill gaps with concrete preparation steps, interview topics, and the reasoning behind the verdict.
+
 ## Run the API
 
 ```bash

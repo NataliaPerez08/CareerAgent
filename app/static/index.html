@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareerAgent — Should you apply?</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Career<span>Agent</span></h1>
+    <p>Find out if a job is worth applying to — before you spend an hour on it.</p>
+  </header>
+
+  <main>
+    <section class="inputs">
+      <div class="card">
+        <div class="card-head">
+          <h2>1 · Your resume</h2>
+          <button type="button" id="load-example" class="link">Load example</button>
+        </div>
+        <div class="tabs" role="tablist">
+          <button type="button" id="tab-paste" class="tab active" role="tab" aria-selected="true">Paste text</button>
+          <button type="button" id="tab-upload" class="tab" role="tab" aria-selected="false">Upload file</button>
+        </div>
+        <div id="panel-paste">
+          <textarea id="resume-text" rows="12"
+            placeholder="Paste your resume text here… (at least 20 characters)"></textarea>
+        </div>
+        <div id="panel-upload" hidden>
+          <label class="file-label" for="resume-file">
+            <strong>Choose a PDF or TXT file</strong>
+            <span class="hint">Max 5 MB · scanned PDFs are rejected</span>
+          </label>
+          <input type="file" id="resume-file" accept=".pdf,.txt">
+          <p class="hint" id="file-name">No file selected</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>2 · Job description</h2>
+        </div>
+        <textarea id="job-description" rows="15"
+          placeholder="Paste the job posting here… (at least 20 characters)"></textarea>
+      </div>
+    </section>
+
+    <div class="analyze-row">
+      <button type="button" id="analyze" class="analyze">Analyze</button>
+      <p class="hint">Takes ~30–60 seconds. Every result is backed by evidence from your resume.</p>
+    </div>
+
+    <div id="status" class="status" hidden>
+      <span class="spinner" aria-hidden="true"></span>
+      <span id="status-text">Analyzing…</span>
+    </div>
+
+    <div id="error" class="error" hidden></div>
+
+    <section id="result" hidden>
+      <div class="result-head card">
+        <div class="verdict">
+          <span id="recommendation" class="badge">APPLY</span>
+          <div class="experience" id="experience"></div>
+        </div>
+        <div class="score-ring" id="score-ring">
+          <div class="score-inner">
+            <span id="score-value">0</span>
+            <small>% match</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Matched skills</h3>
+          <div id="matched" class="chips good"></div>
+          <div id="matched-preferred-wrap" hidden>
+            <h4>Preferred, also matched</h4>
+            <div id="matched-preferred" class="chips good soft"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Missing skills</h3>
+          <div id="missing"></div>
+        </div>
+
+        <div class="card">
+          <h3>Evidence from your resume</h3>
+          <ul id="evidence" class="quotes"></ul>
+        </div>
+
+        <div class="card">
+          <h3>Skill gaps &amp; how to close them</h3>
+          <div id="gaps"></div>
+        </div>
+
+        <div class="card">
+          <h3>Interview topics</h3>
+          <ol id="topics" class="topics"></ol>
+        </div>
+
+        <div class="card">
+          <h3>Preparation plan</h3>
+          <ol id="plan" class="plan"></ol>
+        </div>
+
+        <div class="card card-wide">
+          <h3>Why</h3>
+          <p id="reasoning" class="reasoning"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>CareerAgent · Strands Agents + Amazon Bedrock · the agent only claims what your resume proves.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

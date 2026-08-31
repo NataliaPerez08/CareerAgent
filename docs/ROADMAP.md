@@ -2,7 +2,7 @@
 
 ## Estado general
 
-**Versión actual:** `v0.6`
+**Versión actual:** `v0.7`
 **Estado:** `TODO`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
@@ -281,11 +281,11 @@ GET /api/v1/evaluations/{id}
 
 ## v0.6 — Web UI
 
-**Estado:** `TODO`
+**Estado:** `DONE`
 
 ### Objetivo
 
-Crear una demo visual sencilla.
+Crear una interfaz mínima para demo. No construir un ATS completo.
 
 ### Flujo
 
@@ -299,21 +299,34 @@ Analyze
 Results
 ```
 
+### Implementado
+
+* [x] UI servida por FastAPI en `/` (`app/static/`: HTML + CSS + JS vanilla, sin build tooling ni dependencias nuevas)
+* [x] Input de CV: pestañas Paste text / Upload file (PDF/TXT, con nombre de archivo visible)
+* [x] Paste de job description
+* [x] Botón Analyze con estado de carga (spinner + contador de segundos) y botón deshabilitado durante la ejecución
+* [x] Botón Load example para demo instantánea (textos embebidos sincronizados con `examples/`)
+* [x] Render del resultado: badge APPLY/MAYBE/SKIP, score ring con color por threshold, experience match, matched skills, missing skills agrupados por severidad (critical/required/preferred), evidence, skill gaps con preparation steps, interview topics, preparation plan, reasoning
+* [x] Manejo de errores en la UI: validación client-side espejo del server (min 20 chars), render amigable de 413/415/422/502 y errores de red
+* [x] Render XSS-safe: todo contenido dinámico (skills, evidence, topics del LLM) via `textContent`/`createElement`
+* [x] Diseño responsive (single column en móvil), usabilidad > diseño sofisticado
+
 ### Mostrar
 
-* [ ] Recommendation
-* [ ] Match score
-* [ ] Matched skills
-* [ ] Missing skills
-* [ ] Evidence
-* [ ] Skill gaps
-* [ ] Interview preparation
+* [x] Recommendation
+* [x] Match score
+* [x] Matched skills
+* [x] Missing skills
+* [x] Evidence
+* [x] Skill gaps
+* [x] Interview preparation
 
 ### Definition of Done
 
-* [ ] Una evaluación puede hacerse sin CLI
-* [ ] La demo principal tarda menos de 60 segundos
-* [ ] No requiere conocimientos técnicos para utilizarla
+* [x] Una evaluación puede hacerse sin CLI (`http://127.0.0.1:8000/`)
+* [x] La demo principal tarda menos de 60 segundos (Load example → Analyze)
+* [x] No requiere conocimientos técnicos para utilizarla
+* [x] Tests pasan (111 passed) y Docker verificado (estáticos incluidos en el wheel)
 
 ---
 
@@ -573,7 +586,7 @@ v0.2  ██████████  DONE
 v0.3  ██████████  DONE
 v0.4  ██████████  DONE
 v0.5  ██████████  DONE
-v0.6  ░░░░░░░░░░  TODO
+v0.6  ██████████  DONE
 v0.7  ░░░░░░░░░░  TODO
 v0.8  ░░░░░░░░░░  TODO
 v0.9  ░░░░░░░░░░  TODO
