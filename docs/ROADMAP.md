@@ -2,7 +2,7 @@
 
 ## Estado general
 
-**Versión actual:** `v0.5`
+**Versión actual:** `v0.6`
 **Estado:** `TODO`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
@@ -137,7 +137,7 @@ Aceptar un CV real y una descripción de vacante.
 
 ### Implementar
 
-* [x] Upload de PDF (`POST /evaluate/upload` multipart + CLI por argumento)
+* [x] Upload de PDF (multipart + CLI por argumento; migrado a `POST /api/v1/evaluations/upload` en v0.5)
 * [x] Extracción de texto (`app/resume_parser.py`, pypdf)
 * [x] Limpieza del texto (`clean_text`: control chars, whitespace, párrafos)
 * [x] Validación de archivos (extensión, magic bytes `%PDF`)
@@ -225,11 +225,11 @@ sola ejecución (modo `--chat`).
 
 ## v0.5 — API estable
 
-**Estado:** `TODO`
+**Estado:** `DONE`
 
 ### Objetivo
 
-Exponer CareerAgent como servicio.
+Exponer CareerAgent como servicio mediante una API versionada y estable.
 
 ### Endpoints
 
@@ -237,39 +237,45 @@ Exponer CareerAgent como servicio.
 GET /health
 
 POST /api/v1/evaluations
+
+POST /api/v1/evaluations/upload
 ```
 
-Posteriormente:
+Posteriormente (v0.7, junto con persistencia):
 
 ```http
 GET /api/v1/evaluations/{id}
 ```
 
-### Implementar
+### Implementado
 
-* [ ] FastAPI
-* [ ] Request schemas
-* [ ] Response schemas
-* [ ] Error handling
-* [ ] Logging
-* [ ] Health endpoint
-* [ ] OpenAPI
-* [ ] Tests de integración
+* [x] FastAPI con prefijo `/api/v1` (contrato estable; `/evaluate` y `/evaluate/upload` migrados al namespace versionado junto con sus consumidores)
+* [x] Request schema `EvaluationRequest` (`resume_text` + `job_description`, min 20 / max 100_000 chars)
+* [x] Response `EvaluationResult` (`response_model` + OpenAPI)
+* [x] Exception handler global: cualquier fallo inesperado (modelo/red/runtime) → 502 con logging centralizado
+* [x] Errores de dominio del upload mapeados explícitamente (413/415/422/400)
+* [x] Logging por request (tamaño de inputs) y logging de errores con traceback
+* [x] Health endpoint
+* [x] OpenAPI documentado en `/docs` y `/openapi.json` (tags, summaries)
+* [x] Core desacoplado de HTTP (`app.service` no importa FastAPI)
+* [x] `GET /api/v1/evaluations/{id}` diferido a v0.7 (sin persistencia; no se inventa almacenamiento temporal)
 
-### Tests
+### Tests (FastAPI TestClient)
 
-* [ ] 200
-* [ ] 422
-* [ ] CV vacío
-* [ ] Vacante vacía
-* [ ] Error del modelo
-* [ ] Input inválido
+* [x] 200 happy path (texto y upload)
+* [x] 422 payload inválido
+* [x] 422 CV vacío
+* [x] 422 vacante vacía
+* [x] 422 campos faltantes / texto sobredimensionado
+* [x] 502 fallo del modelo (texto y upload, vía exception handler global)
+* [x] 415 formato no soportado, 413 tamaño excedido, 422 PDF corrupto/escaneado/vacío
+* [x] OpenAPI documenta los endpoints
 
 ### Definition of Done
 
-* [ ] API documentada en `/docs`
-* [ ] Tests pasan
-* [ ] Core desacoplado de HTTP
+* [x] API documentada en `/docs`
+* [x] Tests pasan (117 passed)
+* [x] Core desacoplado de HTTP
 
 ---
 
@@ -566,7 +572,7 @@ v0.1  ██████████  DONE
 v0.2  ██████████  DONE
 v0.3  ██████████  DONE
 v0.4  ██████████  DONE
-v0.5  ░░░░░░░░░░  TODO
+v0.5  ██████████  DONE
 v0.6  ░░░░░░░░░░  TODO
 v0.7  ░░░░░░░░░░  TODO
 v0.8  ░░░░░░░░░░  TODO

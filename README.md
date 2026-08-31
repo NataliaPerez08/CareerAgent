@@ -126,26 +126,26 @@ Then open the generated FastAPI docs at:
 http://127.0.0.1:8000/docs
 ```
 
-Text request:
+The stable API lives under `/api/v1`. Text request (`POST /api/v1/evaluations`):
 
 ```bash
-curl -X POST http://127.0.0.1:8000/evaluate \
+curl -X POST http://127.0.0.1:8000/api/v1/evaluations \
   -H 'content-type: application/json' \
   -d '{
-    "resume": "Backend developer with 2 years of Python, REST APIs, PostgreSQL and Docker experience.",
+    "resume_text": "Backend developer with 2 years of Python, REST APIs, PostgreSQL and Docker experience.",
     "job_description": "Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker. AWS preferred."
   }'
 ```
 
-Or upload a resume file directly (PDF/TXT, multipart):
+Or upload a resume file directly (PDF/TXT, multipart, `POST /api/v1/evaluations/upload`):
 
 ```bash
-curl -X POST http://127.0.0.1:8000/evaluate/upload \
+curl -X POST http://127.0.0.1:8000/api/v1/evaluations/upload \
   -F 'resume=@cv.pdf' \
   -F 'job_description=Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker.'
 ```
 
-Upload errors are explicit: `413` too large, `415` unsupported format, `422` empty/corrupt/unreadable text.
+Errors are explicit and logged: `422` invalid payload, empty resume/job, or unreadable text, `413` too large, `415` unsupported format, `502` model/agent failure. Retrieving past evaluations by id arrives with persistence in v0.7.
 
 The response is a structured `EvaluationResult`:
 
