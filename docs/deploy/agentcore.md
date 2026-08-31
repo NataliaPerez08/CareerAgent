@@ -159,3 +159,30 @@ See [Get started with the AgentCore CLI](https://docs.aws.amazon.com/bedrock-age
 # with the CLI project: agentcore remove all && agentcore deploy
 # or delete the runtime directly (console / bedrock-agentcore-control DeleteAgentRuntime)
 ```
+
+## Deployment attempt log (2026-09-01, v1.0)
+
+The deployment was re-attempted with valid AWS credentials
+(`aws sts get-caller-identity` → account `740055419949`, user `bedrook`,
+shared credentials file). Result: **still blocked — IAM permissions**.
+Every probe below was a read-only call; the exact errors:
+
+| Command (boto3 equivalent) | AWS service | Error |
+|---|---|---|
+| `bedrock-agentcore-control.list_agent_runtimes()` | Bedrock AgentCore control plane | `AccessDeniedException` |
+| `s3.list_buckets()` | S3 | `AccessDenied` |
+| `bedrock-runtime.invoke_model(modelId="amazon.nova-micro-v1:0")` | Bedrock runtime | **OK** |
+| `sts.get_caller_identity()` | STS | **OK** |
+
+The IAM user has Bedrock model access (the local API and eval suite
+run against Nova Micro with these credentials) but lacks
+`bedrock-agentcore-control` and S3 permissions, which the direct code
+deployment flow requires (S3 upload of the package +
+`CreateAgentRuntime`). No execution role trusted by
+`bedrock-agentcore.amazonaws.com` exists in the account either.
+
+To unblock: grant the user `bedrock-agentcore-control` + S3 permissions
+(or run `make agentcore-deploy` from a role that has them) and create
+the execution role from [Prerequisites](#prerequisites). The deploy
+itself is one command and was validated package-wise via
+`make agentcore-zip`.

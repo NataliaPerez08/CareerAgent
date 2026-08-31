@@ -1,0 +1,16 @@
+Junior Backend Engineer
+
+We build logistics software for small retailers. You will join the
+backend team that owns order processing and inventory services.
+
+Requirements:
+- 2+ years of backend development experience.
+- Python.
+- REST API development.
+- PostgreSQL.
+- Docker.
+- AWS.
+
+Preferred:
+- Kubernetes.
+- CI/CD.

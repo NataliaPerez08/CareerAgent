@@ -1,82 +1,249 @@
 # CareerAgent
 
-CareerAgent is an early prototype for the **Agents for Humans Hackathon**. It helps early-career software engineers evaluate whether a job is worth pursuing by comparing evidence in a resume against a job description, and tells them how to prepare for it.
+**Should you apply? Get an evidence-based answer, not generic advice.**
+
+CareerAgent evaluates a resume against a job description and returns a
+structured verdict — matched skills backed by verbatim resume evidence,
+missing skills by severity, and a concrete preparation plan — with a
+strict no-hallucination contract: nothing is ever claimed that the
+resume cannot prove.
+
+Built for the **Agents for Humans Hackathon**.
+
+## Problem
+
+Job descriptions are noisy. Candidates — especially early-career ones —
+struggle to tell whether they are actually underqualified or simply
+missing a small number of non-critical requirements. Generic career
+chatbots make this worse: they produce plausible advice that isn't
+anchored to the actual resume, so you still don't know what you're
+really missing.
+
+CareerAgent evaluates the candidate using **evidence from the resume**,
+and nothing else. If the resume provides no evidence for something, the
+system says *unknown* — it never guesses.
+
+## Solution
+
+Paste (or upload) a resume, paste a job description, press **Analyze**:
+
+- a deterministic **APPLY / MAYBE / SKIP** recommendation with a match score;
+- matched skills, each backed by **verbatim evidence quoted from the resume**
+  (validated by code — invented evidence is dropped);
+- missing requirements split by severity (critical / required / preferred),
+  and requirements whose status the description leaves ambiguous kept as
+  *unknown* (never guessed, never counted against the score);
+- a **skill-gap preparation plan** and concrete **interview topics**;
+- everything persisted so you can revisit past evaluations.
+
+## Demo
+
+The reproducible demo scenario lives in
+[`docs/DEMO.md`](docs/DEMO.md) (< 3 minutes, one click via **Load
+example**). Verified outcome of the demo inputs
+(`examples/demo_resume.txt` + `examples/demo_job.txt`):
+
+```text
+Recommendation:   APPLY
+Score:            80   (4 of 5 required skills)
+Matched:          python, rest api, postgresql, docker
+Missing required: aws            ← the gap, with a preparation plan
+Missing preferred: ci/cd, kubernetes
+Evidence:         5 verbatim quotes from the resume
+```
+
+Deliberately not a 100% match: the point of the product is showing
+*exactly* what you're missing and how to close it — not cheerleading.
+
+## How it works
+
+**LLM interprets. Code decides. Evals verify.**
+
+```text
+Resume ──> LLM extraction ──> CandidateProfile   (Pydantic)
+Job    ──> LLM extraction ──> JobRequirements    (Pydantic)
+                    ↓
+        Normalization (aliases, context words)
+                    ↓
+        Deterministic matching (score, evidence validation)
+                    ↓
+        Recommendation policy (centralized thresholds)
+                    ↓
+        Gap analysis (severity from code, content from LLM)
+                    ↓
+        Grounded explanation (LLM, from the computed result)
+```
+
+The LLM (Amazon Nova Micro) only does what a model should do: extract
+structure from ambiguous text and draft explanation content. The
+score, thresholds, severity ranking, and the APPLY/MAYBE/SKIP verdict
+are 100% deterministic Python — the model cannot quietly change the
+business rules.
 
 ## Architecture
 
-```text
-Resume ──> LLM extraction ──> CandidateProfile (Pydantic)
-Job    ──> LLM extraction ──> JobRequirements (Pydantic)
-                   |
-                   v
-       Job analysis (analyze_job core: normalize, classify, dedupe)
-                   |
-                   v
-       Deterministic matching (calculate_match core)
-       skill aliases, score, evidence validation
-                   |
-                   v
-       APPLY / MAYBE / SKIP policy (centralized thresholds)
-                   |
-                   v
-       Gap analysis (identify_skill_gaps core: severity ranking)
-                   |
-                   v
-       LLM career plan draft ──> code validation (generate_interview_plan core)
-                   |
-                   v
-       LLM explanation ──> EvaluationResult (JSON)
+```mermaid
+flowchart TB
+    U(("User")) --> IO["Web UI / CLI"]
+    IO --> API["FastAPI /api/v1"]
+    API --> PIPE["Evaluation pipeline (app.service)"]
+    API --> DB[("PostgreSQL (SQLite locally)")]
+
+    subgraph BED ["Strands Agent — Amazon Bedrock, Amazon Nova Micro"]
+        PEX["Resume → CandidateProfile (LLM extraction)"]
+        REX["Job → JobRequirements (LLM extraction)"]
+        PLAN["Interview topics + preparation (LLM draft)"]
+        EXPL["Explanation (LLM, grounded)"]
+    end
+
+    subgraph CORE ["Deterministic core — plain Python (agent tools)"]
+        NORM["normalize_skills"]
+        MATCH["calculate_match"]
+        POLICY["decide_recommendation"]
+        GAPS["identify_skill_gaps"]
+    end
+
+    PIPE --> PEX & REX
+    PEX --> NORM
+    REX --> NORM
+    NORM --> MATCH --> POLICY --> GAPS --> PLAN
+    POLICY --> EXPL
 ```
 
-The LLM only extracts, drafts preparation content, and explains. Scores, thresholds, recommendations, gap severity, strengths, and the final validation of every drafted step are always computed by deterministic code. Any "evidence" quote that does not appear verbatim in the resume is dropped, and preparation steps are only accepted for skills that are actually missing.
+The same evaluation core runs behind three runtimes — CLI, FastAPI +
+web UI, and an Amazon Bedrock AgentCore Runtime adapter — without the
+core ever depending on any of them.
 
-The same cores power the Strands agent tool workflow:
+**AgentCore status:** the runtime adapter, deployment package and docs
+are implemented and validated locally, but the live deployment is
+currently **blocked by IAM permissions** in our AWS account (no
+`bedrock-agentcore-control`/S3 access) — see
+[`docs/deploy/agentcore.md`](docs/deploy/agentcore.md). It is a
+planned deployment, not an active production component.
+
+## Why agentic?
+
+The Strands agent works through **five tools** — an inspectable
+workflow, not a single mega-prompt:
 
 ```text
 Agent
- ├── analyze_job
- ├── normalize_skills
- ├── calculate_match
- ├── identify_skill_gaps
- └── generate_interview_plan
+ ├── analyze_job            (classify + normalize requirements)
+ ├── normalize_skills       (canonical names for both sides)
+ ├── calculate_match        (deterministic score + recommendation)
+ ├── identify_skill_gaps    (severity: critical > required > preferred)
+ └── generate_interview_plan (validate + assemble preparation)
 ```
 
-## Stack
+Each step is deterministic where determinism is possible, individually
+tested, and demoable. The agent's freedom is confined to interpretation
+and drafting — never to the verdict.
 
-- Python 3.11+
-- Strands Agents SDK
-- Amazon Bedrock (default Strands model provider)
-- FastAPI
-- SQLAlchemy 2.0 + Alembic (SQLite for local dev, PostgreSQL for docker compose)
-- pytest
-- Ruff
-- Docker
-- Nix Flake
+## Tech stack
 
-## Requirements
+Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
+· FastAPI · Pydantic · SQLAlchemy 2.0 + Alembic (SQLite/PostgreSQL)
+· Docker · Nix flake · pytest · Ruff
 
-You need Python 3.11+ and, to invoke the agent through the default model provider, AWS credentials with access to Amazon Bedrock.
+## Features
 
-Configure AWS with your preferred secure mechanism, for example:
+- Resume input as pasted text, TXT, or **PDF** (validated: format,
+  size, corrupt and scanned/image-only files rejected explicitly)
+- Structured `EvaluationResult` contract across CLI, API and UI
+- Skill **normalization**: aliases (`postgres` → `postgresql`,
+  `cicd` → `ci/cd`, `cpp` → `c++`, `rest api development` →
+  `rest api`) and context-word stripping (`AWS experience` → `aws`)
+- Ambiguous requirements kept as `unknown` — never counted in the score
+- Centralized recommendation policy (APPLY ≥ 70 with no critical miss
+  and no experience mismatch; SKIP < 45 or critical miss; else MAYBE)
+- Evaluation history in PostgreSQL/SQLite, migrations on boot
+- OpenAPI docs, request validation, explicit error mapping
+  (413/415/422/502), structured logging
+- Two-tier eval suite (see below)
+
+## Evaluation
+
+Results from a concrete execution — **2026-09-01, Amazon Nova Micro
+(`amazon.nova-micro-v1:0`), temperature 0.2, 25 cases, us-east-1** —
+not eternally hardcoded numbers. Re-run with `make eval` /
+`make eval-llm`:
+
+```text
+Deterministic tier (no LLM, reproducible)
+Correct recommendation:      100% (25/25)
+Match exactness:             100% (25/25)
+Requirement classification:  100% (25/25)
+Evidence grounding:          100% (25/25)
+Evidence hallucination:        0 fabricated items kept
+
+LLM tier (real Bedrock extraction)
+Skill recall / precision:  97.2% / 97.2%
+Years extraction:          100% (25/25)
+Requirement classification:  84% (21/25)
+Recommendation correctness:  92% (23/25)
+Evidence hallucination:       0%  ← critical target, met in every run
+Tool invocation:            100% (3/3 agent loops, all 5 tools)
+```
+
+The eval suite ([`tests/evals/`](tests/evals/)) covers 25 cases in 8
+categories: strong/weak match, missing required/preferred skills,
+junior-vs-senior experience gates, ambiguous requirements, skill
+aliases, irrelevant experience. Cases include **hallucination probes**
+— plausible-but-absent resume claims that the evidence validator must
+drop.
+
+Two tiers, deliberately separated for cost:
+
+- `make test` and `make eval` **never call Bedrock** — the
+  deterministic tier runs free in CI, and the dataset integrity plus
+  the full deterministic tier are part of the normal test suite.
+- `make eval-llm` makes real model calls (~50 on Nova Micro) and must
+  be run explicitly.
+
+Only metrics actually executed are reported (`dist/evals/report.md`,
+timestamped). Across repeated executions at temperature 0.2 we observe
+run-to-run variance: recommendation correctness 84–92%, requirement
+classification 68–88%, while **fabricated evidence remained 0 in every
+execution**.
+
+## Quick start
 
 ```bash
-aws configure
+python3 -m venv .venv && source .venv/bin/activate
+make dev          # install with dev extras
+aws configure     # credentials with Bedrock access (Nova Micro)
+make run          # http://127.0.0.1:8000/  → Load example → Analyze
 ```
 
-Do **not** commit AWS keys to this repository.
+## AWS setup
 
-## Local setup
+CareerAgent talks to Amazon Bedrock through the Strands SDK using the
+default AWS credential chain — no keys in the repo, no keys in `.env`
+(see `.env.example`). Configure any standard mechanism:
 
-### With Nix
+```bash
+aws configure     # or SSO, or environment variables in your shell
+```
+
+Optional environment variables (defaults in parentheses):
+`AWS_REGION` (`us-east-1`), `BEDROCK_MODEL_ID`
+(`amazon.nova-micro-v1:0`), `BEDROCK_TEMPERATURE` (`0.2`).
+
+We deliberately develop and demo on **Nova Micro, the cheapest Bedrock
+model**, and fixed extraction quirks in a deterministic normalization
+layer instead of upgrading the model.
+
+## Running locally
+
+With Nix:
 
 ```bash
 nix develop
-python -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 make dev
 ```
 
-### Without Nix
+Without Nix (Python 3.11+):
 
 ```bash
 python3 -m venv .venv
@@ -85,211 +252,133 @@ python -m pip install --upgrade pip
 make dev
 ```
 
-## Verify the deterministic layer first
-
-The matching tool and API health endpoint do not require an LLM call:
+The deterministic layer needs no LLM and is the fastest smoke check:
 
 ```bash
 make test
 ```
 
-## Run the CLI agent
-
-After AWS/Bedrock is configured:
+### CLI
 
 ```bash
-make cli
+make cli                                  # demo pair: examples/demo_*.txt
+python -m app.cli cv.pdf job.txt          # real files (PDF or TXT)
+python -m app.cli --chat                  # Strands agent, 5-tool free loop
 ```
 
-The CLI loads `examples/resume.txt` and `examples/job.txt` by default. It also accepts real resume files (PDF or TXT):
+### Web UI / API
 
 ```bash
-python -m app.cli path/to/resume.pdf path/to/job.txt
+make run                                  # UI on :8000, docs on /docs
 ```
 
-To demo the Strands agent running the five-tool workflow in its free loop (opt-in; the structured pipeline above remains the main contract):
-
-```bash
-python -m app.cli --chat
-```
-
-Resume files are validated before parsing: supported formats (`.pdf`, `.txt`), maximum size (`RESUME_MAX_SIZE_MB`, default 5 MB), empty and corrupt files are rejected, and image-only/scanned PDFs are reported instead of silently producing garbage.
-
-## Run the web UI
-
-The fastest way to use CareerAgent — no CLI needed:
-
-```bash
-make run
-```
-
-Then open:
-
-```text
-http://127.0.0.1:8000/
-```
-
-The flow is four steps: paste your resume (or upload a PDF/TXT), paste the job description, press **Analyze**, and read the result. A **Load example** button fills both inputs for an instant demo (the full evaluation takes ~30–60 seconds). The result shows the recommendation (`APPLY` / `MAYBE` / `SKIP`), match score, matched and missing skills grouped by severity, resume evidence, skill gaps with concrete preparation steps, interview topics, and the reasoning behind the verdict.
-
-## Run the API
-
-```bash
-make run
-```
-
-Then open the generated FastAPI docs at:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-The stable API lives under `/api/v1`. Text request (`POST /api/v1/evaluations`):
+Text and upload endpoints (stable `/api/v1` contract):
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/evaluations \
   -H 'content-type: application/json' \
-  -d '{
-    "resume_text": "Backend developer with 2 years of Python, REST APIs, PostgreSQL and Docker experience.",
-    "job_description": "Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker. AWS preferred."
-  }'
-```
+  -d '{"resume_text": "...", "job_description": "..."}'
 
-Or upload a resume file directly (PDF/TXT, multipart, `POST /api/v1/evaluations/upload`):
-
-```bash
 curl -X POST http://127.0.0.1:8000/api/v1/evaluations/upload \
   -F 'resume=@cv.pdf' \
-  -F 'job_description=Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker.'
+  -F 'job_description=Junior backend engineer. Requires Python.'
 ```
 
-Errors are explicit and logged: `422` invalid payload, empty resume/job, or unreadable text, `413` too large, `415` unsupported format, `502` model/agent failure.
+Responses are structured `EvaluationResult` JSON — recommendation,
+score, matched/missing skills by severity, verbatim evidence,
+strengths, skill gaps with preparation steps, interview topics, and
+reasoning. Errors are explicit: `422` invalid payload/empty or
+unreadable inputs, `413` too large, `415` unsupported format, `502`
+model failure.
 
-Every evaluation is persisted. The response is a structured `EvaluationResult` plus the storage metadata (`id`, `created_at`, `job_title`):
+### Persistence
 
-```json
-{
-  "recommendation": "APPLY",
-  "score": 100,
-  "matched_skills": ["docker", "postgresql", "python", "rest api"],
-  "matched_preferred_skills": [],
-  "missing_required_skills": [],
-  "missing_preferred_skills": ["aws"],
-  "missing_critical_skills": [],
-  "unknown_requirements": [],
-  "experience_match": true,
-  "evidence": ["2 years of Python, REST APIs, PostgreSQL and Docker experience."],
-  "strengths": [
-    "Meets 4 of 4 required skills: docker, postgresql, python, rest api",
-    "Experience requirement met: 2 years"
-  ],
-  "skill_gaps": [
-    {
-      "skill": "aws",
-      "severity": "preferred",
-      "preparation_steps": ["IAM fundamentals", "S3", "Lambda", "API Gateway"]
-    }
-  ],
-  "interview_topics": ["PostgreSQL indexes", "REST design", "Docker networking"],
-  "preparation_plan": ["aws: IAM fundamentals", "aws: S3", "aws: Lambda", "aws: API Gateway"],
-  "reasoning": "..."
-}
-```
-
-Strengths and gap severity are always computed by deterministic code; the LLM only drafts the preparation content, which code then validates (steps for skills that are not actually missing are dropped).
-
-## Persistence
-
-Every evaluation is stored with its candidate, resume and job (`Candidate → Resume`, `Resume + Job → Evaluation`), including score, recommendation, skill lists, evidence, gaps and timestamps. Internal prompts are never stored.
-
-Storage is selected with `DATABASE_URL` (`app/db.py`):
-
-```env
-DATABASE_URL=sqlite:///./careeragent.db                                  # default, zero-config
-DATABASE_URL=postgresql+psycopg://careeragent:careeragent@localhost:5432/careeragent
-```
-
-The schema is owned by Alembic (`app/migrations/`). Pending migrations are applied automatically on API startup, or explicitly:
+Every evaluation is stored (`Candidate → Resume`, `Resume + Job →
+Evaluation`): score, recommendation, skill lists, evidence, gaps,
+timestamps — never internal prompts. Selected by `DATABASE_URL`
+(default zero-config SQLite; PostgreSQL via docker compose). Alembic
+owns the schema and migrations run automatically on API startup, or:
 
 ```bash
 make migrate
+curl http://127.0.0.1:8000/api/v1/evaluations        # history
+curl http://127.0.0.1:8000/api/v1/evaluations/1      # stored evaluation
 ```
-
-Past evaluations are recoverable through the API:
-
-```bash
-curl http://127.0.0.1:8000/api/v1/evaluations          # recent history (newest first)
-curl http://127.0.0.1:8000/api/v1/evaluations/1        # full stored evaluation
-```
-
-Persistence is best-effort per request: if storing fails after an evaluation succeeded, the result is still returned (without an `id`) and the failure is logged.
 
 ## Docker
 
 ```bash
-make docker-build
-make docker-run
-```
-
-For actual Bedrock calls from Docker, pass AWS credentials using an appropriate mechanism for your environment rather than baking them into the image.
-
-Full stack with PostgreSQL (migrations run on boot, data survives restarts via the `pgdata` volume):
-
-```bash
-make compose-up     # API on http://127.0.0.1:8000, Postgres on localhost:5432
+make docker-build && make docker-run      # single container (SQLite)
+make compose-up                           # API + PostgreSQL
 make compose-down
 ```
 
-## Deploy the agent to AWS AgentCore
+`docker compose` starts PostgreSQL and the API (migrations on boot,
+data persists in the `pgdata` volume) and mounts your `~/.aws`
+credentials read-only for Bedrock access. Verified end-to-end from a
+clean build: health check, UI, a real Bedrock evaluation, persistence
+and history.
 
-The evaluation core (Strands agent + deterministic matching) can run on Amazon Bedrock AgentCore Runtime without touching the local service:
-
-```bash
-make agentcore-run       # AgentCore protocol on :8080, no AWS required
-make agentcore-zip       # deployment package (core only, no API/persistence)
-AGENTCORE_ROLE_ARN=... make agentcore-deploy
-```
-
-The deployed agent answers the same evaluation contract as the API (`resume_text`/`resume_b64` + `job_description` → `EvaluationResult`). Full instructions — prerequisites, execution role, invocation, observability — live in [docs/deploy/agentcore.md](docs/deploy/agentcore.md).
-
-## Evaluations
-
-The eval suite (`tests/evals/`) measures agent behavior against a 25-case dataset covering 8 categories (strong/weak match, missing required/preferred skills, junior vs senior experience gates, ambiguous requirements, skill aliases, irrelevant experience).
-
-Two tiers, run separately by design (cost policy — `make test` never calls Bedrock):
+## Tests
 
 ```bash
-make eval        # deterministic tier: no LLM calls, free, reproducible
-make eval-llm    # LLM tier: real extraction on Amazon Bedrock (Nova Micro)
+make test      # 219 tests, no LLM calls (models mocked where relevant)
+make lint      # ruff
 ```
 
-Latest executed results (Nova Micro, 25 cases, temperature 0.2):
+## Security / privacy
 
-```text
-Deterministic tier
-Correct recommendation:     100%   Match exactness:            100%
-Requirement classification: 100%   Evidence grounding:         100%
-Evidence hallucination:       0 kept fabricated items
+- Resumes contain **PII**. CareerAgent is a hackathon project, **not a
+  production service** — production use would need access controls,
+  retention limits and encryption decisions we have not built.
+- Logs record input sizes and stage timings, **never full resumes or
+  full prompts**; the database stores resume/job text but no internal
+  prompts.
+- No secrets in the repo: AWS credentials come from the standard
+  credential chain (never committed, never in `.env`); `.env.example`
+  documents variables without real values.
+- All dynamic content in the web UI is rendered XSS-safe via
+  `textContent`/`createElement`.
 
-LLM tier
-Skill recall / precision: 97.2% / 99.2%
-Years extraction:          100%   Requirement classification:  88%
-Recommendation correctness: 92%   Tool invocation:            100% (3/3 agent loops, all 5 tools)
-Evidence hallucination:      0%   (critical target: 0)
-```
+## Limitations
 
-The report is printed and written to `dist/evals/report.md`. Only metrics actually executed are reported. Known Nova Micro limitations (documented in `tests/evals/README.md`): run-to-run variance at temperature 0.2, occasional prose mentions classified as required in ambiguous job descriptions, and occasional dropped items from requirements lists. See `tests/evals/README.md` for the dataset schema and metric definitions.
+Honest ones:
+
+- **LLM run-to-run variance** at temperature 0.2 — recommendation
+  correctness ranged 84–92% across our executions.
+- **Nova Micro struggles with ambiguous requirements**: prose mentions
+  ("you will work with Kubernetes") are sometimes classified as
+  required instead of unknown, and items are occasionally dropped from
+  explicit requirements lists. This is the dominant residual error mode.
+- The alias map covers observed high-frequency variants only — it is
+  not a complete skills ontology.
+- Requirement classification is not perfect (68–88% strict
+  all-buckets-exact across runs); the *recommendation* is more stable
+  than the *classification* because normalization and policy absorb
+  part of the noise.
+- A recommendation is decision support, not a decision — candidates
+  should still read the job posting.
+- PDF parsing works for text-based PDFs; scanned/image-only PDFs are
+  detected and rejected, not OCR'd.
+- The AgentCore deployment is blocked by IAM permissions in our AWS
+  account (documented in `docs/deploy/agentcore.md`); we do not claim a
+  deployed endpoint.
 
 ## Roadmap
 
-The versioned roadmap (v0.1 → v1.0) lives in [docs/ROADMAP.md](docs/ROADMAP.md).
-Progress is tracked there; only one version is `IN PROGRESS` at a time.
+Versioned progress v0.1 → v1.0 lives in
+[`docs/ROADMAP.md`](docs/ROADMAP.md). Post-hackathon ideas (job search,
+ranking, resume adaptation, application tracking) are explicitly listed
+there as *not built*.
 
-## Design principle
+## Hackathon
 
-The LLM interprets ambiguous language; deterministic code handles calculations and facts whenever possible. CareerAgent must never invent skills or experience that are absent from the resume.
-
-Skill names are normalized deterministically before comparison: lowercased, whitespace-collapsed, unified through a small alias map (`postgres` → `postgresql`, `cicd` → `ci/cd`, `cpp` → `c++`, and `rest apis`, `rest api development`, `rest api design and integration` → `rest api`), and stripped of context words models tend to attach (`AWS experience` → `aws`, `Familiarity with CI/CD` → `ci/cd`), so equivalent variants from the resume and the job description are treated as the same skill.
+- Demo scenario & script: [`docs/DEMO.md`](docs/DEMO.md)
+- Video script: [`docs/VIDEO_SCRIPT.md`](docs/VIDEO_SCRIPT.md)
+- Devpost draft: [`docs/DEVPOST.md`](docs/DEVPOST.md)
+- Required screenshots: [`docs/screenshots/`](docs/screenshots/) — to be
+  captured from the running app (none are fabricated)
 
 ## License
 
-Apache-2.0. Add the full license text before publishing the hackathon submission.
+Apache-2.0 — see [LICENSE](LICENSE).

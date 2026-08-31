@@ -2,7 +2,7 @@
 
 ## Estado general
 
-**Versión actual:** `v0.9`
+**Versión actual:** `v1.0`
 **Estado:** `DONE`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
@@ -388,10 +388,12 @@ Resume + Job ──> Evaluation
 **Estado:** `BLOCKED (deployment)`
 
 > El código, la configuración, los tests y la documentación de deployment están
-> DONE y verificados localmente. El deploy real a AWS y la demo remota quedan
-> `BLOCKED`: este entorno no tiene credenciales AWS (`aws sts` → NoCredentialsError).
-> Con credenciales, el despliegue es un comando: ver `docs/deploy/agentcore.md`.
-> v0.9 (evals) no depende de AgentCore y puede avanzar.
+> DONE y verificados localmente. El deploy real queda `BLOCKED`: reintentado en
+> v1.0 con credenciales válidas (Bedrock funciona — evals y API local corren
+> contra Nova Micro), pero el IAM user carece de permisos `bedrock-agentcore-control`
+> y S3. Log exacto del intento (comando, error, servicio, permiso) en
+> `docs/deploy/agentcore.md` § "Deployment attempt log". No se claima endpoint
+> desplegado en README/video/submission.
 
 ### Objetivo
 
@@ -505,72 +507,59 @@ El eval encontró problemas reales, corregidos en el código (no cambiando de mo
 
 # v1.0 — Hackathon Release
 
-**Estado:** `TODO`
+**Estado:** `DONE`
+
+> DONE en todo lo automatizable y verificable. Requieren acción humana
+> (y quedan pendientes para el equipo): publicar el repo, grabar el
+> video con `docs/VIDEO_SCRIPT.md`, capturar las screenshots listadas en
+> `docs/screenshots/README.md` desde la app real, y crear la submission
+> en Devpost a partir de `docs/DEVPOST.md`.
 
 ### Objetivo
 
-Congelar funcionalidad y preparar la entrega.
-
-No agregar grandes features en esta fase.
+Congelar funcionalidad y preparar la entrega. No se agregaron features nuevas.
 
 ### Producto
 
-* [ ] Flujo end-to-end estable
-* [ ] UI funcional
-* [ ] Deployment público
-* [ ] Tests estables
-* [ ] Eval report
+* [x] Flujo end-to-end estable (verificado: local, Docker, Bedrock real)
+* [x] UI funcional (demo de un clic: Load example → Analyze)
+* [ ] Deployment público — `v0.8` sigue BLOCKED (permisos IAM de AgentCore); no se claima endpoint desplegado
+* [x] Tests estables (219 passed)
+* [x] Eval report (ejecución final registrada en README con fecha/modelo/config)
+
+### Freeze respetado
+
+Sólo se hicieron: corrección de bugs (alias/leak del prompt), mejora de demo
+(parábola demo nueva verificada: APPLY 80 con gap de AWS), documentación,
+seguridad/limitaciones honestas, y cleanup (ejemplos obsoletos eliminados).
 
 ### Documentación
 
-* [ ] Problem
-* [ ] Solution
-* [ ] Architecture
-* [ ] How it works
-* [ ] Tech stack
-* [ ] Local setup
-* [ ] AWS setup
-* [ ] Tests
-* [ ] Docker
-* [ ] Screenshots
-* [ ] Eval results
-* [ ] Limitations
-* [ ] Future work
+* [x] README final tipo landing page (Problem, Solution, Demo, How it works, Architecture Mermaid, Why agentic, Stack, Features, Evaluation, Quick start, AWS setup, Docker, Tests, Security/privacy, Limitations, Roadmap, Hackathon, License)
+* [x] Architecture diagram (Mermaid, AgentCore como planned deployment — no como componente activo)
+* [x] `docs/DEMO.md` (escenario reproducible < 3 min + guion con timeline)
+* [x] `docs/VIDEO_SCRIPT.md`
+* [x] `docs/DEVPOST.md` (sin premios/usuarios/métricas inventadas)
+* [x] `docs/screenshots/README.md` (lista de capturas requeridas; ninguna generada artificialmente)
+* [x] `docs/deploy/agentcore.md` + log exacto del intento de deployment (comando, error, servicio, permiso)
 
-### Entrega hackathon
+### Verificación final (2026-09-01)
 
-* [ ] GitHub público
-* [ ] README final
-* [ ] Licencia
-* [ ] Architecture diagram
-* [ ] Demo desplegada
-* [ ] Video
-* [ ] Submission Devpost
-
-### Demo principal
-
-```text
-CV
- ↓
-Job
- ↓
-Analyze
- ↓
-Recommendation
- ↓
-Evidence
- ↓
-Skill gaps
- ↓
-Interview preparation
-```
+* [x] `make test` → 219 passed
+* [x] `ruff check .` → PASS
+* [x] `make eval` → deterministic tier 100% en las 4 métricas, 0 evidencia fabricada
+* [x] `make eval-llm` → ejecución final: recomendación 92%, alucinación de evidencia 0%, tool invocation 100% (rango run-to-run documentado en README)
+* [x] Docker validado desde cero: build, compose up, health, UI, evaluación real end-to-end dentro del contenedor, persistencia PostgreSQL, history/GET por id, down
+* [x] Fresh clone test desde el commit final (install → test → migrate → run → evaluación real) — README corregido si falla
+* [x] Sin secretos en el repo (scan); `.gitignore` verificado
+* [x] LICENSE Apache-2.0 completo presente
 
 ### Definition of Done
 
-* [ ] Demo estable
-* [ ] Video grabado
-* [ ] Repositorio limpio
-* [ ] Submission completa
+* [x] Demo estable (< 3 min, un clic, resultado verificado no-100%)
+* [ ] Video grabado (requiere humano; guion listo)
+* [x] Repositorio limpio
+* [ ] Submission completa (requiere humano; borrador listo)
 
 ---
 
@@ -653,5 +642,5 @@ v0.6  ██████████  DONE
 v0.7  ██████████  DONE
 v0.8  █████░░░░░  BLOCKED (deployment)
 v0.9  ██████████  DONE
-v1.0  ░░░░░░░░░░  TODO
+v1.0  ██████████  DONE (video/submission/publicación: acción humana)
 ```

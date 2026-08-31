@@ -1,9 +1,0 @@
-Backend developer with 2 years of professional software development experience.
-
-Skills and evidence:
-- Python for backend services and automation.
-- Go for backend utilities and services.
-- REST API design and integration.
-- PostgreSQL for relational persistence.
-- Docker for local development and deployment packaging.
-- Linux as a daily development environment.

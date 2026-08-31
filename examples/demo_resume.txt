@@ -1,0 +1,16 @@
+Junior Backend Developer
+
+Backend developer with 2 years of professional backend development
+experience building internal services and automation tools.
+
+Skills and evidence:
+- Python for backend services, scripting, and automation.
+- REST API design and integration for internal tooling.
+- PostgreSQL for relational persistence and reporting queries.
+- Docker for local development and deployment packaging.
+- Git for version control and code review workflows.
+
+Experience:
+- Built and maintained internal REST services for the operations team.
+- Wrote PostgreSQL reporting queries used by two other teams.
+- Packaged every service with Docker for one-command local setup.

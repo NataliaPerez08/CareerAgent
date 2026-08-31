@@ -97,7 +97,9 @@ Return:
   using short canonical names.
 - critical_skills: only skills the description explicitly marks with words
   like "must have", "mandatory", or "non-negotiable". A plain
-  "Requirements" list means required, NOT critical.
+  "Requirements" list means required, NOT critical. The words "must
+  have", "mandatory" and "non-negotiable" are classification cues,
+  never skill names.
 - unknown_requirements: skills or requirements mentioned whose
   required/preferred status is NOT explicitly stated. A skill that
   appears only in prose describing the role or the company stack,

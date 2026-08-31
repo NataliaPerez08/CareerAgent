@@ -16,13 +16,13 @@ def build_parser() -> argparse.ArgumentParser:
         "resume",
         nargs="?",
         default=None,
-        help="Path to a resume file (PDF or TXT). Defaults to examples/resume.txt.",
+        help="Path to a resume file (PDF or TXT). Defaults to examples/demo_resume.txt.",
     )
     parser.add_argument(
         "job",
         nargs="?",
         default=None,
-        help="Path to a job description text file. Defaults to examples/job.txt.",
+        help="Path to a job description text file. Defaults to examples/demo_job.txt.",
     )
     parser.add_argument(
         "--chat",
@@ -38,8 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
 
-    resume_path = Path(args.resume) if args.resume else ROOT / "examples" / "resume.txt"
-    job_path = Path(args.job) if args.job else ROOT / "examples" / "job.txt"
+    resume_path = Path(args.resume) if args.resume else ROOT / "examples" / "demo_resume.txt"
+    job_path = Path(args.job) if args.job else ROOT / "examples" / "demo_job.txt"
 
     resume_text = parse_resume(resume_path.read_bytes(), resume_path.name)
     job_text = job_path.read_text()

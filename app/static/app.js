@@ -2,28 +2,39 @@ const API_TEXT = "/api/v1/evaluations";
 const API_UPLOAD = "/api/v1/evaluations/upload";
 const MIN_LENGTH = 20;
 
-const EXAMPLE_RESUME = `Backend developer with 2 years of professional software development experience.
+const EXAMPLE_RESUME = `Junior Backend Developer
+
+Backend developer with 2 years of professional backend development
+experience building internal services and automation tools.
 
 Skills and evidence:
-- Python for backend services and automation.
-- Go for backend utilities and services.
-- REST API design and integration.
-- PostgreSQL for relational persistence.
+- Python for backend services, scripting, and automation.
+- REST API design and integration for internal tooling.
+- PostgreSQL for relational persistence and reporting queries.
 - Docker for local development and deployment packaging.
-- Linux as a daily development environment.`;
+- Git for version control and code review workflows.
+
+Experience:
+- Built and maintained internal REST services for the operations team.
+- Wrote PostgreSQL reporting queries used by two other teams.
+- Packaged every service with Docker for one-command local setup.`;
 
 const EXAMPLE_JOB = `Junior Backend Engineer
 
+We build logistics software for small retailers. You will join the
+backend team that owns order processing and inventory services.
+
 Requirements:
-- 1+ years of backend software development experience.
+- 2+ years of backend development experience.
 - Python.
 - REST API development.
 - PostgreSQL.
 - Docker.
+- AWS.
 
 Preferred:
-- AWS experience.
-- Familiarity with CI/CD.`;
+- Kubernetes.
+- CI/CD.`;
 
 const el = (id) => document.getElementById(id);
 

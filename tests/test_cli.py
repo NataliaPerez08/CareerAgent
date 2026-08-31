@@ -64,8 +64,8 @@ def test_cli_rejects_unsupported_resume_format(tmp_path):
 
 
 def test_examples_resume_exists():
-    assert (Path(cli.ROOT) / "examples" / "resume.txt").exists()
-    assert (Path(cli.ROOT) / "examples" / "job.txt").exists()
+    assert (Path(cli.ROOT) / "examples" / "demo_resume.txt").exists()
+    assert (Path(cli.ROOT) / "examples" / "demo_job.txt").exists()
 
 
 def test_cli_chat_mode_runs_agent_workflow(monkeypatch, capsys):
