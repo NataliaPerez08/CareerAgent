@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "career-agent"
-version = "0.8.0"
+version = "0.9.0"
 description = "An AI career agent built with Strands Agents SDK for the Agents for Humans hackathon."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -12,6 +12,8 @@ from app.schemas import CandidateProfile, JobRequirements, MatchResult
 
 SKILL_ALIASES = {
     "postgres": "postgresql",
+    "cicd": "ci/cd",
+    "cpp": "c++",
     "rest api development": "rest api",
     "rest apis": "rest api",
     "rest api design": "rest api",

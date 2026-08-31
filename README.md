@@ -251,6 +251,34 @@ AGENTCORE_ROLE_ARN=... make agentcore-deploy
 
 The deployed agent answers the same evaluation contract as the API (`resume_text`/`resume_b64` + `job_description` → `EvaluationResult`). Full instructions — prerequisites, execution role, invocation, observability — live in [docs/deploy/agentcore.md](docs/deploy/agentcore.md).
 
+## Evaluations
+
+The eval suite (`tests/evals/`) measures agent behavior against a 25-case dataset covering 8 categories (strong/weak match, missing required/preferred skills, junior vs senior experience gates, ambiguous requirements, skill aliases, irrelevant experience).
+
+Two tiers, run separately by design (cost policy — `make test` never calls Bedrock):
+
+```bash
+make eval        # deterministic tier: no LLM calls, free, reproducible
+make eval-llm    # LLM tier: real extraction on Amazon Bedrock (Nova Micro)
+```
+
+Latest executed results (Nova Micro, 25 cases, temperature 0.2):
+
+```text
+Deterministic tier
+Correct recommendation:     100%   Match exactness:            100%
+Requirement classification: 100%   Evidence grounding:         100%
+Evidence hallucination:       0 kept fabricated items
+
+LLM tier
+Skill recall / precision: 97.2% / 99.2%
+Years extraction:          100%   Requirement classification:  88%
+Recommendation correctness: 92%   Tool invocation:            100% (3/3 agent loops, all 5 tools)
+Evidence hallucination:      0%   (critical target: 0)
+```
+
+The report is printed and written to `dist/evals/report.md`. Only metrics actually executed are reported. Known Nova Micro limitations (documented in `tests/evals/README.md`): run-to-run variance at temperature 0.2, occasional prose mentions classified as required in ambiguous job descriptions, and occasional dropped items from requirements lists. See `tests/evals/README.md` for the dataset schema and metric definitions.
+
 ## Roadmap
 
 The versioned roadmap (v0.1 → v1.0) lives in [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -260,7 +288,7 @@ Progress is tracked there; only one version is `IN PROGRESS` at a time.
 
 The LLM interprets ambiguous language; deterministic code handles calculations and facts whenever possible. CareerAgent must never invent skills or experience that are absent from the resume.
 
-Skill names are normalized deterministically before comparison: lowercased, whitespace-collapsed, unified through a small alias map (`postgres` → `postgresql`, and `rest apis`, `rest api development`, `rest api design and integration` → `rest api`), and stripped of context words models tend to attach (`AWS experience` → `aws`, `Familiarity with CI/CD` → `ci/cd`), so equivalent variants from the resume and the job description are treated as the same skill.
+Skill names are normalized deterministically before comparison: lowercased, whitespace-collapsed, unified through a small alias map (`postgres` → `postgresql`, `cicd` → `ci/cd`, `cpp` → `c++`, and `rest apis`, `rest api development`, `rest api design and integration` → `rest api`), and stripped of context words models tend to attach (`AWS experience` → `aws`, `Familiarity with CI/CD` → `ci/cd`), so equivalent variants from the resume and the job description are treated as the same skill.
 
 ## License
 

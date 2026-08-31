@@ -85,16 +85,24 @@ REQUIREMENTS_EXTRACTION_PROMPT = """Extract the requirements from the job descri
 Return:
 - required_skills: skills the job description explicitly lists as required,
   for example under a "Requirements" heading or with words like "requires".
+  A skill listed under a "Requirements" heading is required, never unknown.
+  Extract every item from every explicit requirements list; never drop or
+  ignore listed requirements.
   Use short canonical skill names, never phrases copied verbatim:
   "AWS experience" is "aws", "Familiarity with CI/CD" is "ci/cd",
   "REST API development" is "rest api".
+  Never list experience durations (for example "1+ year of experience")
+  as skills: durations belong in min_years_experience only.
 - preferred_skills: skills explicitly listed as preferred or nice-to-have,
   using short canonical names.
 - critical_skills: only skills the description explicitly marks with words
   like "must have", "mandatory", or "non-negotiable". A plain
   "Requirements" list means required, NOT critical.
 - unknown_requirements: skills or requirements mentioned whose
-  required/preferred status is NOT explicitly stated.
+  required/preferred status is NOT explicitly stated. A skill that
+  appears only in prose describing the role or the company stack,
+  outside any requirements list and without required/preferred
+  wording, is unknown — never required, never dropped entirely.
 - min_years_experience: minimum years of experience explicitly required,
   or null if not stated.
 

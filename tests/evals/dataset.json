@@ -1,0 +1,862 @@
+{
+  "cases": [
+    {
+      "case_id": "strong_match_backend_01",
+      "category": "strong_match",
+      "resume": "Backend developer with 2 years of professional backend development experience.\n\nSkills:\n- Python for backend services and automation.\n- REST API design and integration.\n- PostgreSQL for relational persistence.\n- Docker for local development and deployment packaging.",
+      "job_description": "Junior Backend Engineer\n\nRequirements:\n- Python.\n- REST API development.\n- Postgres.\n- Docker.\n- 1+ years of backend experience.\n\nPreferred:\n- AWS experience.",
+      "notes": "Full required coverage with alias variants (rest api development vs design and integration, postgres vs postgresql); preferred aws missing does not block APPLY.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "REST API design and integration", "PostgreSQL", "Docker"],
+          "years_of_experience": 2,
+          "evidence": [
+            "2 years of professional backend development",
+            "Python for backend services and automation",
+            "PostgreSQL for relational persistence"
+          ]
+        },
+        "requirements": {
+          "required_skills": ["Python", "REST API development", "Postgres", "Docker"],
+          "preferred_skills": ["AWS experience"],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["docker", "postgresql", "python", "rest api"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": ["aws"],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["3 years of Kubernetes experience", "Led a team of five engineers"]
+      }
+    },
+    {
+      "case_id": "strong_match_data_02",
+      "category": "strong_match",
+      "resume": "Data analyst with 3 years of data analysis experience.\n\nSkills:\n- Python for analysis scripts.\n- SQL for data transformation.\n- Tableau for executive dashboards.",
+      "job_description": "Data Analyst\n\nRequirements:\n- Python.\n- SQL.\n- Tableau.",
+      "notes": "Every required skill matched; neither side states an experience gate (experience_match must be null, not false).",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "SQL", "Tableau"],
+          "years_of_experience": 3,
+          "evidence": ["3 years of data analysis experience", "Tableau for executive dashboards"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "SQL", "Tableau"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["python", "sql", "tableau"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": ["Experience with Apache Spark", "Machine learning model deployment"]
+      }
+    },
+    {
+      "case_id": "strong_match_fullstack_03",
+      "category": "strong_match",
+      "resume": "Fullstack developer with 4 years of fullstack web development experience.\n\nSkills:\n- JavaScript for application logic.\n- React for customer-facing interfaces.\n- Node.js for API servers.\n- Postgres for application data.\n- TypeScript across the codebase.",
+      "job_description": "Fullstack Engineer\n\nRequirements:\n- JavaScript.\n- React.\n- Node.js.\n- PostgreSQL.\n- 2+ years of experience.\n\nPreferred:\n- TypeScript.",
+      "notes": "Required fully matched plus a preferred skill matched (typescript); postgres alias on the resume side.",
+      "gold": {
+        "profile": {
+          "skills": ["JavaScript", "React", "Node.js", "Postgres", "TypeScript"],
+          "years_of_experience": 4,
+          "evidence": [
+            "4 years of fullstack web development",
+            "React for customer-facing interfaces",
+            "TypeScript across the codebase"
+          ]
+        },
+        "requirements": {
+          "required_skills": ["JavaScript", "React", "Node.js", "PostgreSQL"],
+          "preferred_skills": ["TypeScript"],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["javascript", "node.js", "postgresql", "react"],
+          "matched_preferred_skills": ["typescript"],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["GraphQL API development", "React Native mobile applications"]
+      }
+    },
+    {
+      "case_id": "strong_match_devops_04",
+      "category": "strong_match",
+      "resume": "Platform engineer with 5 years of DevOps and platform work experience.\n\nSkills:\n- Linux as a daily working environment.\n- Docker for packaging and local stacks.\n- Kubernetes for orchestration.\n- AWS for production infrastructure.\n- CI/CD for release automation.",
+      "job_description": "DevOps Engineer\n\nRequirements:\n- Linux.\n- Docker.\n- AWS experience.\n- 3+ years of experience.\n\nPreferred:\n- Kubernetes.",
+      "notes": "Context-word stripping on the job side (AWS experience -> aws) and a matched preferred skill.",
+      "gold": {
+        "profile": {
+          "skills": ["Linux", "Docker", "Kubernetes", "AWS", "CI/CD"],
+          "years_of_experience": 5,
+          "evidence": ["5 years of DevOps and platform work", "AWS for production infrastructure"]
+        },
+        "requirements": {
+          "required_skills": ["Linux", "Docker", "AWS experience"],
+          "preferred_skills": ["Kubernetes"],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 3
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["aws", "docker", "linux"],
+          "matched_preferred_skills": ["kubernetes"],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Terraform infrastructure as code", "Managed on-call rotations for 12 services"]
+      }
+    },
+    {
+      "case_id": "weak_match_backend_01",
+      "category": "weak_match",
+      "resume": "Backend developer with 2 years of backend development experience.\n\nSkills:\n- Python for internal tooling and services.\n- PostgreSQL for reporting queries.\n- Docker for local development.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- Python.\n- Django.\n- PostgreSQL.\n- Docker.\n- Redis.\n- 2+ years of backend experience.",
+      "notes": "3 of 5 required skills matched (60%): MAYBE territory, experience gate met.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "PostgreSQL", "Docker"],
+          "years_of_experience": 2,
+          "evidence": ["2 years of backend development", "Docker for local development"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "Django", "PostgreSQL", "Docker", "Redis"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 60,
+          "matched_skills": ["docker", "postgresql", "python"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["django", "redis"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Redis caching layer implementation", "Django REST framework experience"]
+      }
+    },
+    {
+      "case_id": "weak_match_mobile_02",
+      "category": "weak_match",
+      "resume": "Android developer building retail applications.\n\nSkills:\n- Kotlin for Android applications.\n- CI/CD pipelines for store releases.\n- Manual testing of release builds.",
+      "job_description": "Android Engineer\n\nRequirements:\n- Kotlin.\n- Jetpack Compose.\n- Retrofit.\n- CI/CD.",
+      "notes": "2 of 4 required matched (50%); the resume never states years so experience_match must stay null.",
+      "gold": {
+        "profile": {
+          "skills": ["Kotlin", "CI/CD", "Manual testing"],
+          "years_of_experience": null,
+          "evidence": ["Kotlin for Android applications", "CI/CD pipelines for store releases"]
+        },
+        "requirements": {
+          "required_skills": ["Kotlin", "Jetpack Compose", "Retrofit", "CI/CD"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 50,
+          "matched_skills": ["ci/cd", "kotlin"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["jetpack compose", "retrofit"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": ["5 years of Android development", "Retrofit integration with coroutines"]
+      }
+    },
+    {
+      "case_id": "weak_match_frontend_03",
+      "category": "weak_match",
+      "resume": "Frontend developer with 3 years of frontend development experience.\n\nSkills:\n- TypeScript for application code.\n- React for component architecture.\n- Jest for unit testing.",
+      "job_description": "Frontend Engineer\n\nRequirements:\n- TypeScript.\n- React.\n- GraphQL.\n- Jest.\n- Webpack.\n- 3+ years of experience.",
+      "notes": "3 of 5 required matched (60%) with the experience gate met: MAYBE driven by missing skills only.",
+      "gold": {
+        "profile": {
+          "skills": ["TypeScript", "React", "Jest"],
+          "years_of_experience": 3,
+          "evidence": ["3 years of frontend development", "Jest for unit testing"]
+        },
+        "requirements": {
+          "required_skills": ["TypeScript", "React", "GraphQL", "Jest", "Webpack"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 3
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 60,
+          "matched_skills": ["jest", "react", "typescript"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["graphql", "webpack"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Webpack bundle optimization", "GraphQL schema design"]
+      }
+    },
+    {
+      "case_id": "missing_required_one_of_four",
+      "category": "missing_required",
+      "resume": "Backend developer with 3 years of backend development experience.\n\nSkills:\n- Python for services and automation.\n- PostgreSQL for relational persistence.\n- Docker for local development.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- Python.\n- PostgreSQL.\n- Docker.\n- Kubernetes.\n- 2+ years of experience.",
+      "notes": "Policy nuance: a single missing required skill (3/4 = 75) still yields APPLY; only critical skills force SKIP.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "PostgreSQL", "Docker"],
+          "years_of_experience": 3,
+          "evidence": ["3 years of backend development", "Python for services and automation"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "PostgreSQL", "Docker", "Kubernetes"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 75,
+          "matched_skills": ["docker", "postgresql", "python"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["kubernetes"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Kubernetes cluster administration", "Helm chart deployments"]
+      }
+    },
+    {
+      "case_id": "missing_required_two_of_five",
+      "category": "missing_required",
+      "resume": "Software engineer with 4 years of backend engineering experience.\n\nSkills:\n- Python for service development.\n- Docker for deployment packaging.\n- PostgreSQL for application data.",
+      "job_description": "Cloud Backend Engineer\n\nRequirements:\n- Python.\n- PostgreSQL.\n- Docker.\n- AWS.\n- Kubernetes.\n- 2+ years of experience.",
+      "notes": "Two missing required skills (3/5 = 60) push the score below the APPLY threshold.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "Docker", "PostgreSQL"],
+          "years_of_experience": 4,
+          "evidence": ["4 years of backend engineering", "Python for service development"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "PostgreSQL", "Docker", "AWS", "Kubernetes"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 60,
+          "matched_skills": ["docker", "postgresql", "python"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["aws", "kubernetes"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["AWS Lambda in production", "Kubernetes operators development"]
+      }
+    },
+    {
+      "case_id": "missing_required_core_stack",
+      "category": "missing_required",
+      "resume": "JVM developer with 4 years of JVM development experience.\n\nSkills:\n- Java for enterprise services.\n- Docker for service packaging.",
+      "job_description": "Java Backend Engineer\n\nRequirements:\n- Java.\n- Spring Boot.\n- PostgreSQL.\n- Docker.\n- 3+ years of experience.",
+      "notes": "Core framework and database missing (2/4 = 50): MAYBE, not SKIP, because nothing is critical.",
+      "gold": {
+        "profile": {
+          "skills": ["Java", "Docker"],
+          "years_of_experience": 4,
+          "evidence": ["4 years of JVM development", "Docker for service packaging"]
+        },
+        "requirements": {
+          "required_skills": ["Java", "Spring Boot", "PostgreSQL", "Docker"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 3
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 50,
+          "matched_skills": ["docker", "java"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["postgresql", "spring boot"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Spring Boot microservices", "PostgreSQL performance tuning"]
+      }
+    },
+    {
+      "case_id": "missing_preferred_aws",
+      "category": "missing_preferred",
+      "resume": "Backend developer with 2 years of backend development experience.\n\nSkills:\n- Python for backend services.\n- PostgreSQL for relational persistence.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- Python.\n- PostgreSQL.\n- 1+ year of experience.\n\nPreferred:\n- AWS.\n- Kubernetes.",
+      "notes": "All preferred skills missing must not block APPLY when required coverage is complete.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "PostgreSQL"],
+          "years_of_experience": 2,
+          "evidence": ["2 years of backend development", "PostgreSQL for relational persistence"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "PostgreSQL"],
+          "preferred_skills": ["AWS", "Kubernetes"],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["postgresql", "python"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": ["aws", "kubernetes"],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["AWS certified solutions architect", "Kubernetes ingress configuration"]
+      }
+    },
+    {
+      "case_id": "missing_preferred_single",
+      "category": "missing_preferred",
+      "resume": "Analytics engineer with 4 years of analytics engineering experience.\n\nSkills:\n- SQL for data transformation.\n- Python for pipeline tooling.",
+      "job_description": "Analytics Engineer\n\nRequirements:\n- SQL.\n- Python.\n- 2+ years of experience.\n\nPreferred:\n- Spanish.",
+      "notes": "A missing non-technical preferred skill (language) never disqualifies.",
+      "gold": {
+        "profile": {
+          "skills": ["SQL", "Python"],
+          "years_of_experience": 4,
+          "evidence": ["4 years of analytics engineering", "SQL for data transformation"]
+        },
+        "requirements": {
+          "required_skills": ["SQL", "Python"],
+          "preferred_skills": ["Spanish"],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["python", "sql"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": ["spanish"],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Professional working proficiency in Spanish", "Looker dashboard development"]
+      }
+    },
+    {
+      "case_id": "missing_preferred_devops",
+      "category": "missing_preferred",
+      "resume": "Backend developer with 3 years of backend development in Go experience.\n\nSkills:\n- Go for network services.\n- PostgreSQL for relational persistence.\n- Docker for deployment packaging.",
+      "job_description": "Platform Backend Engineer\n\nRequirements:\n- Go.\n- PostgreSQL.\n- Docker.\n- 2+ years of experience.\n\nPreferred:\n- Kubernetes.\n- Terraform.",
+      "notes": "Complete required coverage with the whole preferred list missing: still APPLY at 100.",
+      "gold": {
+        "profile": {
+          "skills": ["Go", "PostgreSQL", "Docker"],
+          "years_of_experience": 3,
+          "evidence": ["3 years of backend development in Go", "Docker for deployment packaging"]
+        },
+        "requirements": {
+          "required_skills": ["Go", "PostgreSQL", "Docker"],
+          "preferred_skills": ["Kubernetes", "Terraform"],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["docker", "go", "postgresql"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": ["kubernetes", "terraform"],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Terraform modules for AWS", "Kubernetes service mesh experience"]
+      }
+    },
+    {
+      "case_id": "junior_vs_senior_backend",
+      "category": "junior_vs_senior",
+      "resume": "Junior backend developer with 1 year of professional backend development experience.\n\nSkills:\n- Python for backend services.\n- REST API design and integration.\n- PostgreSQL for relational persistence.",
+      "job_description": "Senior Backend Engineer\n\nMust have Python.\n\nRequirements:\n- REST API development.\n- PostgreSQL.\n- 5+ years of backend experience.",
+      "notes": "Perfect skill coverage but an explicit experience gate: the policy must downgrade to MAYBE, and the critical skill (python) is matched so it does not force SKIP.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "REST API design and integration", "PostgreSQL"],
+          "years_of_experience": 1,
+          "evidence": ["1 year of professional backend development", "REST API design and integration"]
+        },
+        "requirements": {
+          "required_skills": ["REST API development", "PostgreSQL"],
+          "preferred_skills": [],
+          "critical_skills": ["Python"],
+          "unknown_requirements": [],
+          "min_years_experience": 5
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 100,
+          "matched_skills": ["postgresql", "python", "rest api"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": ["python"],
+          "unknown_requirements": [],
+          "experience_match": false
+        },
+        "hallucination_probes": ["5 years of backend experience", "Mentored junior developers"]
+      }
+    },
+    {
+      "case_id": "junior_vs_senior_data",
+      "category": "junior_vs_senior",
+      "resume": "Data engineer with 2 years of data engineering experience.\n\nSkills:\n- SQL for warehouse queries.\n- Python for pipeline tooling.\n- Spark for batch pipelines.",
+      "job_description": "Senior Data Engineer\n\nRequirements:\n- SQL.\n- Python.\n- Spark.\n- 4+ years of experience.",
+      "notes": "100% skill match with an explicit 4-year gate against 2 years: MAYBE.",
+      "gold": {
+        "profile": {
+          "skills": ["SQL", "Python", "Spark"],
+          "years_of_experience": 2,
+          "evidence": ["2 years of data engineering", "Spark for batch pipelines"]
+        },
+        "requirements": {
+          "required_skills": ["SQL", "Python", "Spark"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 4
+        },
+        "expected": {
+          "recommendation": "MAYBE",
+          "score": 100,
+          "matched_skills": ["python", "spark", "sql"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": false
+        },
+        "hallucination_probes": ["4 years of data engineering", "Led migration from Hadoop"]
+      }
+    },
+    {
+      "case_id": "junior_vs_senior_unstated_years",
+      "category": "junior_vs_senior",
+      "resume": "Systems programmer working on low-level infrastructure tooling.\n\nSkills:\n- C++ for firmware components.\n- Rust for safety-critical tooling.\n- Linux as a daily working environment.",
+      "job_description": "Senior Systems Engineer\n\nRequirements:\n- C++.\n- Rust.\n- Linux.\n- 6+ years of systems programming experience.",
+      "notes": "The resume never states years: experience is unknown (null), which must NOT be treated as a mismatch. APPLY stands.",
+      "gold": {
+        "profile": {
+          "skills": ["C++", "Rust", "Linux"],
+          "years_of_experience": null,
+          "evidence": ["C++ for firmware components", "Rust for safety-critical tooling"]
+        },
+        "requirements": {
+          "required_skills": ["C++", "Rust", "Linux"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 6
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["c++", "linux", "rust"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": ["6 years of systems programming", "Linux kernel contributor"]
+      }
+    },
+    {
+      "case_id": "ambiguous_requirement_tools",
+      "category": "ambiguous_requirement",
+      "resume": "Backend developer with 3 years of backend development experience.\n\nSkills:\n- Python for backend services.\n- PostgreSQL for relational persistence.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- Python.\n- PostgreSQL.\n- 2+ years of experience.\n\nYou will also work with Kubernetes and Terraform in our platform.",
+      "notes": "Stack mentions without required/preferred wording must stay unknown and never dilute the score.",
+      "gold": {
+        "profile": {
+          "skills": ["Python", "PostgreSQL"],
+          "years_of_experience": 3,
+          "evidence": ["3 years of backend development", "Python for backend services"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "PostgreSQL"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": ["Kubernetes", "Terraform"],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["postgresql", "python"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": ["kubernetes", "terraform"],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Kubernetes cluster operations", "Terraform state management"]
+      }
+    },
+    {
+      "case_id": "ambiguous_requirement_stack_mentions",
+      "category": "ambiguous_requirement",
+      "resume": "Platform engineer with 2 years of platform engineering experience.\n\nSkills:\n- Docker for service packaging.",
+      "job_description": "Platform Engineer\n\nRequirements:\n- Docker.\n- 1+ year of experience.\n\nOur stack also includes Redis for caching.",
+      "notes": "A single ambiguous stack mention stays unknown and out of the score.",
+      "gold": {
+        "profile": {
+          "skills": ["Docker"],
+          "years_of_experience": 2,
+          "evidence": ["2 years of platform engineering", "Docker for service packaging"]
+        },
+        "requirements": {
+          "required_skills": ["Docker"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": ["Redis"],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["docker"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": ["redis"],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Redis cluster administration", "Memcached migration project"]
+      }
+    },
+    {
+      "case_id": "ambiguous_requirement_unstated",
+      "category": "ambiguous_requirement",
+      "resume": "Backend developer with 2 years of backend development experience.\n\nSkills:\n- Go for network services.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- Go.\n- 1+ year of experience.\n\nThe services run on AWS and use Kafka internally.",
+      "notes": "Infrastructure named without status language must be classified unknown, never required.",
+      "gold": {
+        "profile": {
+          "skills": ["Go"],
+          "years_of_experience": 2,
+          "evidence": ["2 years of backend development", "Go for network services"]
+        },
+        "requirements": {
+          "required_skills": ["Go"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": ["AWS", "Kafka"],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["go"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": ["aws", "kafka"],
+          "experience_match": true
+        },
+        "hallucination_probes": ["AWS ECS production workloads", "Kafka streams processing"]
+      }
+    },
+    {
+      "case_id": "skill_alias_rest",
+      "category": "skill_alias",
+      "resume": "Backend developer with 2 years of backend development experience.\n\nSkills:\n- REST API design and integration.\n- PostgreSQL for relational persistence.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- REST API development.\n- Postgres.\n- 1+ year of experience.",
+      "notes": "Both sides use different aliases of the same skills: rest api development == rest api design and integration; Postgres == PostgreSQL.",
+      "gold": {
+        "profile": {
+          "skills": ["REST API design and integration", "PostgreSQL"],
+          "years_of_experience": 2,
+          "evidence": ["REST API design and integration", "PostgreSQL for relational persistence"]
+        },
+        "requirements": {
+          "required_skills": ["REST API development", "Postgres"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["postgresql", "rest api"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["GraphQL API development", "gRPC service definitions"]
+      }
+    },
+    {
+      "case_id": "skill_alias_context_words",
+      "category": "skill_alias",
+      "resume": "Cloud engineer with 3 years of cloud engineering experience.\n\nSkills:\n- AWS for deployment pipelines.\n- CI/CD for release automation.\n- Python for operational scripts.",
+      "job_description": "Cloud Engineer\n\nRequirements:\n- AWS experience.\n- Familiarity with CI/CD.\n- Proficiency in Python.\n- 2+ years of experience.",
+      "notes": "Context words attached by the job side (experience with / familiarity with / proficiency in) must be stripped before matching.",
+      "gold": {
+        "profile": {
+          "skills": ["AWS", "CI/CD", "Python"],
+          "years_of_experience": 3,
+          "evidence": ["AWS for deployment pipelines", "CI/CD for release automation"]
+        },
+        "requirements": {
+          "required_skills": ["AWS experience", "Familiarity with CI/CD", "Proficiency in Python"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["aws", "ci/cd", "python"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Azure DevOps migrations", "Python machine learning projects"]
+      }
+    },
+    {
+      "case_id": "skill_alias_variants",
+      "category": "skill_alias",
+      "resume": "Backend developer with 2 years of backend development experience.\n\nSkills:\n- REST API for service interfaces.\n- PostgreSQL for relational persistence.\n- Docker for deployment packaging.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- REST APIs.\n- Postgres.\n- Docker.\n- 1+ year of experience.",
+      "notes": "Plural and short-form aliases: REST APIs -> rest api, Postgres -> postgresql.",
+      "gold": {
+        "profile": {
+          "skills": ["REST API", "PostgreSQL", "Docker"],
+          "years_of_experience": 2,
+          "evidence": ["REST API for service interfaces", "Docker for deployment packaging"]
+        },
+        "requirements": {
+          "required_skills": ["REST APIs", "Postgres", "Docker"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": ["docker", "postgresql", "rest api"],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["SOAP integration experience", "PostgreSQL replication setup"]
+      }
+    },
+    {
+      "case_id": "irrelevant_experience_embedded",
+      "category": "irrelevant_experience",
+      "resume": "Embedded systems engineer with 6 years of embedded systems development experience.\n\nSkills:\n- C for device drivers.\n- Embedded C for microcontrollers.\n- Arduino for prototyping.\n- RTOS for real-time firmware.\n- Circuit design for hardware bring-up.",
+      "job_description": "Web Backend Engineer\n\nRequirements:\n- Python.\n- Django.\n- PostgreSQL.\n- Docker.\n- React.\n- 2+ years of experience.",
+      "notes": "Six years of deep but unrelated experience: zero required coverage forces SKIP regardless of seniority.",
+      "gold": {
+        "profile": {
+          "skills": ["C", "Embedded C", "Arduino", "RTOS", "Circuit design"],
+          "years_of_experience": 6,
+          "evidence": ["6 years of embedded systems development", "RTOS for real-time firmware"]
+        },
+        "requirements": {
+          "required_skills": ["Python", "Django", "PostgreSQL", "Docker", "React"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "SKIP",
+          "score": 0,
+          "matched_skills": [],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["django", "docker", "postgresql", "python", "react"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["React single page applications", "Python data pipelines"]
+      }
+    },
+    {
+      "case_id": "irrelevant_experience_academic",
+      "category": "irrelevant_experience",
+      "resume": "Research scientist with 7 years of academic research experience.\n\nSkills:\n- MATLAB for computational models.\n- Simulink for system simulation.\n- Research methodology for experimental design.\n- Scientific publishing in peer-reviewed journals.",
+      "job_description": "Software Engineer\n\nRequirements:\n- Java.\n- Spring Boot.\n- SQL.\n- Git.\n- 2+ years of software engineering experience.",
+      "notes": "Distinguished academic career with no overlap on the required engineering stack: SKIP.",
+      "gold": {
+        "profile": {
+          "skills": ["MATLAB", "Simulink", "Research methodology", "Scientific publishing"],
+          "years_of_experience": 7,
+          "evidence": ["7 years of academic research", "MATLAB for computational models"]
+        },
+        "requirements": {
+          "required_skills": ["Java", "Spring Boot", "SQL", "Git"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 2
+        },
+        "expected": {
+          "recommendation": "SKIP",
+          "score": 0,
+          "matched_skills": [],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["git", "java", "spring boot", "sql"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Java microservices at scale", "Spring Boot dependency injection"]
+      }
+    },
+    {
+      "case_id": "irrelevant_experience_designer",
+      "category": "irrelevant_experience",
+      "resume": "Web designer with 3 years of web design experience.\n\nSkills:\n- HTML for page structure.\n- CSS for styling.\n- JavaScript for interactions.\n- Figma for design systems.\n- Photoshop for asset editing.",
+      "job_description": "Backend Engineer\n\nRequirements:\n- Go.\n- PostgreSQL.\n- gRPC.\n- Docker.\n- 1+ year of experience.",
+      "notes": "Adjacent-discipline profile with no backend overlap: SKIP at 0% required coverage.",
+      "gold": {
+        "profile": {
+          "skills": ["HTML", "CSS", "JavaScript", "Figma", "Photoshop"],
+          "years_of_experience": 3,
+          "evidence": ["3 years of web design", "Figma for design systems"]
+        },
+        "requirements": {
+          "required_skills": ["Go", "PostgreSQL", "gRPC", "Docker"],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": 1
+        },
+        "expected": {
+          "recommendation": "SKIP",
+          "score": 0,
+          "matched_skills": [],
+          "matched_preferred_skills": [],
+          "missing_required_skills": ["docker", "go", "grpc", "postgresql"],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": true
+        },
+        "hallucination_probes": ["Go concurrency patterns", "gRPC deadline configuration"]
+      }
+    }
+  ]
+}

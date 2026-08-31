@@ -29,6 +29,19 @@ def test_normalize_skill_applies_aliases():
     assert normalize_skill("  JAVA   script ") == "java script"
 
 
+def test_normalize_skill_unifies_slashless_ci_cd():
+    # Regression (v0.9 evals): Nova Micro sometimes emits "cicd" without
+    # the slash; it must canonicalize to "ci/cd".
+    assert normalize_skill("cicd") == "ci/cd"
+    assert normalize_skill("CICD") == "ci/cd"
+
+
+def test_normalize_skill_unifies_cpp_spelling():
+    # Regression (v0.9 evals): Nova Micro sometimes emits "cpp" for "C++".
+    assert normalize_skill("cpp") == "c++"
+    assert normalize_skill("C++") == "c++"
+
+
 def test_normalize_skill_strips_context_words():
     # Regression: Nova Micro extracts "AWS experience" / "ci/cd familiarity"
     # from "AWS experience. Familiarity with CI/CD." Context words must not

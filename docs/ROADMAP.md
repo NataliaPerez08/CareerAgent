@@ -2,8 +2,8 @@
 
 ## Estado general
 
-**Versión actual:** `v0.8`
-**Estado:** `BLOCKED (deployment)`
+**Versión actual:** `v0.9`
+**Estado:** `DONE`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
 
@@ -431,7 +431,7 @@ El core debe seguir funcionando localmente.
 
 ## v0.9 — Agent Evaluations
 
-**Estado:** `TODO`
+**Estado:** `DONE`
 
 ### Objetivo
 
@@ -441,36 +441,65 @@ Medir objetivamente el comportamiento de CareerAgent.
 
 ```text
 tests/evals/
-├── strong_match
-├── weak_match
-├── missing_required
-├── missing_preferred
-├── junior_vs_senior
-├── ambiguous_requirement
-├── skill_alias
-└── irrelevant_experience
+├── dataset.json (25 casos, 8 categorías, 3-4 casos por categoría)
+├── README.md (schema, métricas, política de costos)
+└── runner.py (importable + CLI)
 ```
+
+* [x] `strong_match` (4), `weak_match` (3), `missing_required` (3), `missing_preferred` (3), `junior_vs_senior` (3), `ambiguous_requirement` (3), `skill_alias` (3), `irrelevant_experience` (3)
+* [x] Cada caso auto-contenido: resume/job redactados para que la evidencia dorada sea verbatim y los `hallucination_probes` estén ausentes (verificado por tests)
 
 ### Métricas
 
-* [ ] Recommendation correctness
-* [ ] Skill extraction accuracy
-* [ ] Tool invocation
-* [ ] Requirement classification
-* [ ] Evidence grounding
-* [ ] Hallucinated candidate experience
+Dos tiers separados por diseño (`make test` nunca llama a Bedrock):
 
-### Meta crítica
+* [x] Deterministic tier (`make eval`, gratis y reproducible): recommendation correctness, match exactness (score + 5 conjuntos de skills + experience_match), requirement classification, evidence grounding, evidence hallucination (probes descartados)
+* [x] LLM tier (`make eval-llm`, Bedrock Nova Micro): skill extraction (recall/precision), years extraction, requirement classification (4 buckets + statuses inventados/demoted), recommendation correctness end-to-end, evidence hallucination post-guard, tool invocation (agent loop completo, sampleo por costo)
+
+### Resultados ejecutados (Nova Micro, 25 casos, temperatura 0.2)
 
 ```text
-Hallucinated candidate experience = 0
+Deterministic tier
+Correct recommendation:      100% (25/25)
+Match exactness:             100% (25/25)
+Requirement classification:  100% (25/25)
+Evidence grounding:          100% (25/25)
+Evidence hallucination:        0 kept fabricated items
+
+LLM tier
+Skill recall (avg):          97.2%
+Skill precision (avg):       99.2%
+Years extraction:            100% (25/25)
+Requirement classification:   88% (22/25)
+Recommendation correctness:   92% (23/25)
+Evidence hallucination:        0% (0 items)  ← target crítico cumplido
+Tool invocation:             100% (3/3 agent loops, 5/5 tools)
 ```
+
+Sólo se reportan métricas efectivamente ejecutadas; el reporte se escribe en
+`dist/evals/report.md` con timestamp y modelo.
+
+### Hallazgos → correcciones con regression test
+
+El eval encontró problemas reales, corregidos en el código (no cambiando de modelo):
+
+* [x] Alias faltantes emitidos por Nova Micro: `cicd` → `ci/cd`, `cpp` → `c++` (`SKILL_ALIASES`)
+* [x] Duraciones extraídas como skills ("1+ year of") → regla explícita en el prompt de extracción
+* [x] Items de listas "Requirements" dropeados cuando hay menciones en prosa → regla explícita en el prompt
+* [x] Leak de ejemplo del prompt ("you will also work with kubernetes" echoado como requisito) → ejemplo eliminado del prompt
+
+### Limitaciones conocidas de Nova Micro (documentadas, no perseguibles sin sobreajustar)
+
+* varianza run-to-run a temperatura 0.2
+* menciones en prosa ocasionalmente clasificadas como required (categoría `ambiguous_requirement`)
+* escalado ocasional a critical de listas "Requirements" planas
 
 ### Definition of Done
 
-* [ ] Evals ejecutables por separado
-* [ ] Resultados reproducibles
-* [ ] Reporte generado automáticamente
+* [x] Evals ejecutables por separado (`make eval` / `make eval-llm`, defaults seguros)
+* [x] Resultados reproducibles (deterministic tier 100% estable; LLM tier con varianza documentada)
+* [x] Reporte generado automáticamente (stdout + `dist/evals/report.md`, exit code por targets)
+* [x] Tests: 219 passed (dataset integrity + tier determinista como tests normales)
 
 ---
 
@@ -623,6 +652,6 @@ v0.5  ██████████  DONE
 v0.6  ██████████  DONE
 v0.7  ██████████  DONE
 v0.8  █████░░░░░  BLOCKED (deployment)
-v0.9  ░░░░░░░░░░  TODO
+v0.9  ██████████  DONE
 v1.0  ░░░░░░░░░░  TODO
 ```

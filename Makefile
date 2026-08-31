@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy
+.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy eval eval-llm
 
 install:
 	python -m pip install -e .
@@ -26,6 +26,12 @@ cli:
 
 costs:
 	python scripts/aws_costs.py
+
+eval:
+	python scripts/run_evals.py --tier deterministic
+
+eval-llm:
+	python scripts/run_evals.py --tier llm
 
 docker-build:
 	docker build -t career-agent:dev .
