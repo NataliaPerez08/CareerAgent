@@ -239,6 +239,18 @@ make compose-up     # API on http://127.0.0.1:8000, Postgres on localhost:5432
 make compose-down
 ```
 
+## Deploy the agent to AWS AgentCore
+
+The evaluation core (Strands agent + deterministic matching) can run on Amazon Bedrock AgentCore Runtime without touching the local service:
+
+```bash
+make agentcore-run       # AgentCore protocol on :8080, no AWS required
+make agentcore-zip       # deployment package (core only, no API/persistence)
+AGENTCORE_ROLE_ARN=... make agentcore-deploy
+```
+
+The deployed agent answers the same evaluation contract as the API (`resume_text`/`resume_b64` + `job_description` → `EvaluationResult`). Full instructions — prerequisites, execution role, invocation, observability — live in [docs/deploy/agentcore.md](docs/deploy/agentcore.md).
+
 ## Roadmap
 
 The versioned roadmap (v0.1 → v1.0) lives in [docs/ROADMAP.md](docs/ROADMAP.md).

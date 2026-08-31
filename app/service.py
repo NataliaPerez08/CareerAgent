@@ -19,7 +19,13 @@ LLM interprets, code decides:
 
 Every LLM step runs on a fresh agent so evaluations never share
 conversation state.
+
+Each pipeline stage logs its duration so latency breakdowns are
+visible locally and in Amazon CloudWatch when deployed to AgentCore.
 """
+
+import logging
+import time
 
 from strands import Agent
 
@@ -48,6 +54,15 @@ from app.schemas import (
     Recommendation,
     SkillGap,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def _stage_completed(name: str, started: float) -> float:
+    now = time.perf_counter()
+    logger.info("Evaluation stage complete: %s (%.2fs)", name, now - started)
+    return now
+
 
 PROFILE_EXTRACTION_PROMPT = """Extract the candidate profile from the resume below.
 
@@ -222,19 +237,27 @@ def generate_career_plan(match: MatchResult) -> CareerPlan:
 
 def evaluate_candidate(resume: str, job_description: str) -> EvaluationResult:
     """Run the full structured evaluation pipeline."""
+    started = time.perf_counter()
+
     profile = extract_candidate_profile(resume)
+    stage = _stage_completed("profile_extraction", started)
+
     requirements = extract_job_requirements(job_description)
+    stage = _stage_completed("requirements_extraction", stage)
+
     requirements = normalize_requirements(requirements)
 
     match = build_match_result(profile, requirements)
     recommendation = decide_recommendation(match, DEFAULT_POLICY)
     strengths = build_strengths(match, profile, requirements)
     gaps = build_skill_gaps(match)
+    stage = _stage_completed("deterministic_matching", stage)
 
     plan = generate_career_plan(match)
     gaps = attach_preparation_steps(gaps, plan.gap_preparation)
     interview_topics = normalize_interview_topics(plan.interview_topics)
     preparation_plan = build_preparation_plan(gaps)
+    stage = _stage_completed("career_plan", stage)
 
     reasoning = explain_evaluation(
         profile,
@@ -244,8 +267,9 @@ def evaluate_candidate(resume: str, job_description: str) -> EvaluationResult:
         strengths=strengths,
         skill_gaps=gaps,
     )
+    stage = _stage_completed("explanation", stage)
 
-    return EvaluationResult(
+    result = EvaluationResult(
         recommendation=recommendation,
         **match.model_dump(),
         unknown_requirements=requirements.unknown_requirements,
@@ -256,6 +280,13 @@ def evaluate_candidate(resume: str, job_description: str) -> EvaluationResult:
         preparation_plan=preparation_plan,
         reasoning=reasoning,
     )
+    logger.info(
+        "Evaluation complete (%.2fs total, recommendation=%s, score=%d)",
+        stage - started,
+        result.recommendation,
+        result.score,
+    )
+    return result
 
 
 def evaluate_resume_file(

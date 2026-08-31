@@ -3,7 +3,7 @@
 ## Estado general
 
 **Versión actual:** `v0.8`
-**Estado:** `TODO`
+**Estado:** `BLOCKED (deployment)`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
 
@@ -385,19 +385,36 @@ Resume + Job ──> Evaluation
 
 ## v0.8 — AWS AgentCore
 
-**Estado:** `TODO`
+**Estado:** `BLOCKED (deployment)`
+
+> El código, la configuración, los tests y la documentación de deployment están
+> DONE y verificados localmente. El deploy real a AWS y la demo remota quedan
+> `BLOCKED`: este entorno no tiene credenciales AWS (`aws sts` → NoCredentialsError).
+> Con credenciales, el despliegue es un comando: ver `docs/deploy/agentcore.md`.
+> v0.9 (evals) no depende de AgentCore y puede avanzar.
 
 ### Objetivo
 
 Desplegar el agente usando servicios administrados de AWS.
 
-### Implementar
+### Implementado
 
-* [ ] AgentCore Runtime
-* [ ] Deployment configuration
-* [ ] Observability
-* [ ] Tracing
-* [ ] Sessions si aportan valor
+* [x] Adapter `app/agentcore_runtime.py` (`bedrock-agentcore` SDK 1.22, `@app.entrypoint`, payload `resume_text`/`resume_b64` + `job_description` → `EvaluationResult`)
+* [x] Separación respetada: `domain/core ← local runtime (FastAPI) ← AgentCore runtime`; el core no se modifica y sigue 100% testeable localmente (`make test`, `make run`)
+* [x] Protocolo verificado en local sin AWS: `/ping` 200, `/invocations` valida y responde (server `make agentcore-run`, port 8080)
+* [x] Deployment reproducible: `scripts/agentcore_deploy.py` (direct code deployment: zip del core + S3 + `Create/UpdateAgentRuntime`, PYTHON_3_13, entrypoint `main.py`) + `make agentcore-zip` / `make agentcore-deploy`
+* [x] Paquete de deployment deliberadamente lean: core + adapter (12 archivos, sin FastAPI/SQLAlchemy/Alembic/UI)
+* [x] Observabilidad: logs de stage con duración en `app.service` (visible local y en CloudWatch), `requestId` + errores estructurados del runtime, doc de CloudWatch Transaction Search / traces
+* [x] Sessions: decisión documentada de NO usarlas (evaluación single-shot, sin estado conversacional)
+* [x] Docs reproducibles: `docs/deploy/agentcore.md` (prerequisitos, rol de ejecución, deploy, invocación, observabilidad, alternativa CLI `@aws/agentcore`)
+* [x] Tests: 13 nuevos (handler text/b64/errores + protocolo `/ping` y `/invocations` con TestClient)
+* [x] `bedrock-agentcore` como extra opcional `[agentcore]` (no es dependencia del core ni del API local)
+
+### Pendiente (requiere credenciales AWS)
+
+* [ ] Ejecutar `make agentcore-deploy` contra una cuenta real
+* [ ] Demo remota funcional (InvokeAgentRuntime)
+* [ ] Verificar traces en CloudWatch Transaction Search
 
 ### Restricción
 
@@ -405,10 +422,10 @@ El core debe seguir funcionando localmente.
 
 ### Definition of Done
 
-* [ ] Agent desplegado
+* [x] Agent desplegable (paquete + script + docs reproducibles; ejecución pendiente de credenciales)
 * [ ] Demo remota funcional
 * [ ] Tracing visible
-* [ ] Documentación de deployment reproducible
+* [x] Documentación de deployment reproducible
 
 ---
 
@@ -605,7 +622,7 @@ v0.4  ██████████  DONE
 v0.5  ██████████  DONE
 v0.6  ██████████  DONE
 v0.7  ██████████  DONE
-v0.8  ░░░░░░░░░░  TODO
+v0.8  █████░░░░░  BLOCKED (deployment)
 v0.9  ░░░░░░░░░░  TODO
 v1.0  ░░░░░░░░░░  TODO
 ```
