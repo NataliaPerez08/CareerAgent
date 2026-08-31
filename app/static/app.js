@@ -260,6 +260,18 @@ function renderResult(data) {
     preferredWrap.hidden = true;
   }
 
+  const saved = el("saved");
+  if (data.id != null) {
+    saved.textContent = "";
+    const link = document.createElement("a");
+    link.href = `/api/v1/evaluations/${data.id}`;
+    link.textContent = `Saved — evaluation #${data.id}`;
+    saved.appendChild(link);
+    saved.hidden = false;
+  } else {
+    saved.hidden = true;
+  }
+
   renderMissing(data);
   renderList("evidence", data.evidence);
   renderGaps(data);

@@ -47,6 +47,7 @@ Agent
 - Strands Agents SDK
 - Amazon Bedrock (default Strands model provider)
 - FastAPI
+- SQLAlchemy 2.0 + Alembic (SQLite for local dev, PostgreSQL for docker compose)
 - pytest
 - Ruff
 - Docker
@@ -161,9 +162,9 @@ curl -X POST http://127.0.0.1:8000/api/v1/evaluations/upload \
   -F 'job_description=Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker.'
 ```
 
-Errors are explicit and logged: `422` invalid payload, empty resume/job, or unreadable text, `413` too large, `415` unsupported format, `502` model/agent failure. Retrieving past evaluations by id arrives with persistence in v0.7.
+Errors are explicit and logged: `422` invalid payload, empty resume/job, or unreadable text, `413` too large, `415` unsupported format, `502` model/agent failure.
 
-The response is a structured `EvaluationResult`:
+Every evaluation is persisted. The response is a structured `EvaluationResult` plus the storage metadata (`id`, `created_at`, `job_title`):
 
 ```json
 {
@@ -196,6 +197,32 @@ The response is a structured `EvaluationResult`:
 
 Strengths and gap severity are always computed by deterministic code; the LLM only drafts the preparation content, which code then validates (steps for skills that are not actually missing are dropped).
 
+## Persistence
+
+Every evaluation is stored with its candidate, resume and job (`Candidate → Resume`, `Resume + Job → Evaluation`), including score, recommendation, skill lists, evidence, gaps and timestamps. Internal prompts are never stored.
+
+Storage is selected with `DATABASE_URL` (`app/db.py`):
+
+```env
+DATABASE_URL=sqlite:///./careeragent.db                                  # default, zero-config
+DATABASE_URL=postgresql+psycopg://careeragent:careeragent@localhost:5432/careeragent
+```
+
+The schema is owned by Alembic (`app/migrations/`). Pending migrations are applied automatically on API startup, or explicitly:
+
+```bash
+make migrate
+```
+
+Past evaluations are recoverable through the API:
+
+```bash
+curl http://127.0.0.1:8000/api/v1/evaluations          # recent history (newest first)
+curl http://127.0.0.1:8000/api/v1/evaluations/1        # full stored evaluation
+```
+
+Persistence is best-effort per request: if storing fails after an evaluation succeeded, the result is still returned (without an `id`) and the failure is logged.
+
 ## Docker
 
 ```bash
@@ -204,6 +231,13 @@ make docker-run
 ```
 
 For actual Bedrock calls from Docker, pass AWS credentials using an appropriate mechanism for your environment rather than baking them into the image.
+
+Full stack with PostgreSQL (migrations run on boot, data survives restarts via the `pgdata` volume):
+
+```bash
+make compose-up     # API on http://127.0.0.1:8000, Postgres on localhost:5432
+make compose-down
+```
 
 ## Roadmap
 

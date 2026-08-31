@@ -1,6 +1,12 @@
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from app.db import get_session
 from app.main import app
+from app.models import Base
 from app.schemas import EvaluationResult
 from tests.pdfgen import make_pdf
 
@@ -22,6 +28,27 @@ RESUME_PDF = make_pdf(
         "- Docker for deployment packaging.",
     ]
 )
+
+
+@pytest.fixture(autouse=True)
+def db_session():
+    """Give every API test an isolated in-memory database."""
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(bind=engine, expire_on_commit=False)
+
+    def override():
+        with factory() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override
+    yield
+    app.dependency_overrides.pop(get_session, None)
+    engine.dispose()
 
 
 def fake_result() -> EvaluationResult:
@@ -49,6 +76,7 @@ def test_openapi_documents_api():
     assert "/health" in paths
     assert "/api/v1/evaluations" in paths
     assert "/api/v1/evaluations/upload" in paths
+    assert "/api/v1/evaluations/{evaluation_id}" in paths
 
 
 def test_create_evaluation_returns_structured_result(monkeypatch):
@@ -69,6 +97,88 @@ def test_create_evaluation_returns_structured_result(monkeypatch):
     assert payload["missing_preferred_skills"] == ["aws"]
     assert payload["experience_match"] is True
     assert payload["evidence"] == ["2 years of professional software development experience"]
+
+
+def test_create_evaluation_persists_and_is_recoverable(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.evaluate_candidate", lambda resume_text, job_description: fake_result()
+    )
+
+    created = client.post(
+        "/api/v1/evaluations",
+        json={
+            "resume_text": RESUME_TEXT,
+            "job_description": "Junior Backend Engineer\n\nRequires Python.",
+        },
+    )
+    assert created.status_code == 200
+    payload = created.json()
+    assert isinstance(payload["id"], int)
+    assert payload["job_title"] == "Junior Backend Engineer"
+    assert payload["created_at"] is not None
+
+    fetched = client.get(f"/api/v1/evaluations/{payload['id']}")
+    assert fetched.status_code == 200
+    assert fetched.json()["score"] == payload["score"]
+    assert fetched.json()["recommendation"] == payload["recommendation"]
+    assert fetched.json()["matched_skills"] == payload["matched_skills"]
+    assert fetched.json()["job_title"] == "Junior Backend Engineer"
+
+
+def test_persistence_failure_returns_result_without_id(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.evaluate_candidate", lambda resume_text, job_description: fake_result()
+    )
+
+    def failing_save(*args, **kwargs):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr("app.main.save_evaluation", failing_save)
+
+    response = client.post(
+        "/api/v1/evaluations",
+        json={"resume_text": RESUME_TEXT, "job_description": JOB_DESCRIPTION},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["id"] is None
+    assert payload["recommendation"] == "APPLY"
+    assert payload["score"] == 100
+
+
+def test_list_evaluations_returns_history(monkeypatch):
+    def fake_evaluate(resume_text, job_description):
+        return fake_result()
+
+    monkeypatch.setattr("app.main.evaluate_candidate", fake_evaluate)
+
+    first = client.post(
+        "/api/v1/evaluations",
+        json={"resume_text": RESUME_TEXT, "job_description": "First Job\n\nRequires Python."},
+    )
+    second = client.post(
+        "/api/v1/evaluations",
+        json={"resume_text": RESUME_TEXT, "job_description": "Second Job\n\nRequires Python."},
+    )
+    assert first.status_code == second.status_code == 200
+
+    response = client.get("/api/v1/evaluations")
+    assert response.status_code == 200
+    history = response.json()
+    assert [entry["id"] for entry in history] == [
+        second.json()["id"],
+        first.json()["id"],
+    ]
+    assert history[0]["job_title"] == "Second Job"
+    assert history[0]["score"] == 100
+    assert history[0]["recommendation"] == "APPLY"
+
+
+def test_get_evaluation_unknown_id_returns_404():
+    response = client.get("/api/v1/evaluations/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Evaluation not found."
 
 
 def test_create_evaluation_rejects_invalid_payload():
@@ -121,13 +231,14 @@ def test_create_evaluation_returns_502_on_model_failure(monkeypatch):
 
 
 def test_upload_returns_structured_result(monkeypatch):
-    def fake_evaluate_resume_file(data, filename, job_description):
-        assert filename == "resume.pdf"
-        assert len(data) == len(RESUME_PDF)
-        assert job_description == JOB_DESCRIPTION
+    seen = {}
+
+    def fake_evaluate(resume_text, job_description):
+        seen["resume_text"] = resume_text
+        seen["job_description"] = job_description
         return fake_result()
 
-    monkeypatch.setattr("app.main.evaluate_resume_file", fake_evaluate_resume_file)
+    monkeypatch.setattr("app.main.evaluate_candidate", fake_evaluate)
 
     response = client.post(
         "/api/v1/evaluations/upload",
@@ -136,10 +247,12 @@ def test_upload_returns_structured_result(monkeypatch):
     )
 
     assert response.status_code == 200
+    assert "Backend developer with 2 years" in seen["resume_text"]
+    assert seen["job_description"] == JOB_DESCRIPTION
     payload = response.json()
     assert payload["recommendation"] == "APPLY"
     assert payload["score"] == 100
-    assert payload["matched_skills"] == ["docker", "postgresql", "python", "rest api"]
+    assert isinstance(payload["id"], int)
 
 
 def test_upload_rejects_unsupported_format():
@@ -208,10 +321,10 @@ def test_upload_validates_job_description_length():
 
 
 def test_upload_returns_502_on_model_failure(monkeypatch):
-    def failing_evaluate_resume_file(data, filename, job_description):
+    def failing_evaluate(resume_text, job_description):
         raise RuntimeError("model unavailable")
 
-    monkeypatch.setattr("app.main.evaluate_resume_file", failing_evaluate_resume_file)
+    monkeypatch.setattr("app.main.evaluate_candidate", failing_evaluate)
 
     response = client.post(
         "/api/v1/evaluations/upload",

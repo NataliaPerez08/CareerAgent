@@ -43,6 +43,7 @@ def test_ui_html_declares_elements_used_by_app_js():
         "result",
         "recommendation",
         "score-value",
+        "saved",
         "matched",
         "missing",
         "evidence",

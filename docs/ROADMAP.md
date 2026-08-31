@@ -2,7 +2,7 @@
 
 ## Estado general
 
-**Versión actual:** `v0.7`
+**Versión actual:** `v0.8`
 **Estado:** `TODO`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
@@ -332,7 +332,7 @@ Results
 
 ## v0.7 — Persistencia
 
-**Estado:** `TODO`
+**Estado:** `DONE`
 
 ### Objetivo
 
@@ -340,29 +340,46 @@ Guardar evaluaciones e historial.
 
 ### Stack
 
-* PostgreSQL
-* Alembic
+* PostgreSQL (producción / docker compose)
+* SQLite (default local, zero-config, mismas migraciones)
+* SQLAlchemy 2.0 + Alembic
 
 ### Entidades
 
-* [ ] Candidate
-* [ ] Resume
-* [ ] Job
-* [ ] Evaluation
+* [x] Candidate (`candidates`)
+* [x] Resume (`resumes`)
+* [x] Job (`jobs`)
+* [x] Evaluation (`evaluations`)
 
-### Implementar
+### Relaciones
 
-* [ ] Database layer
-* [ ] Migrations
-* [ ] Repository/service layer
-* [ ] Evaluation history
-* [ ] Timestamps
+```text
+Candidate ──1:N──> Resume
+Resume + Job ──> Evaluation
+```
+
+### Implementado
+
+* [x] Database layer (`app/db.py`: `DATABASE_URL`, engine/session factory, `get_session` dependency)
+* [x] Models (`app/models.py`: tipos portables Integer/String/Text/Boolean/DateTime/JSON → mismos models y migraciones en SQLite y PostgreSQL)
+* [x] Migrations (`app/migrations/` dentro del package → viajan en el wheel/Docker; `alembic.ini` + `make migrate`; autogenerate contra DB vacía)
+* [x] Migraciones aplicadas on-boot (lifespan ejecuta `alembic upgrade head`; única fuente de verdad del schema)
+* [x] Repository/service layer (`app/repository.py`: save/get/list, reconstrucción `EvaluationResult`, `job_title` determinista = primera línea no vacía)
+* [x] Evaluation history (`GET /api/v1/evaluations?limit=` → summaries newest-first)
+* [x] `GET /api/v1/evaluations/{id}` (404 si no existe) — endpoint diferido desde v0.5
+* [x] POST devuelve `id`, `created_at`, `job_title` (`EvaluationResponse` extiende `EvaluationResult`)
+* [x] Timestamps (`created_at` UTC en las 4 entidades)
+* [x] Persistencia best-effort: si el guardado falla tras una evaluación exitosa (costosa), se devuelve el resultado sin `id` y se loguea el error — degradación explícita, nunca silenciosa
+* [x] Guardado: score, recommendation, matched/missing skills, evidence, gaps, topics, plan, reasoning, texto del CV y de la vacante. Prompts internos nunca se guardan
+* [x] docker-compose.yml (postgres + api con volumen `pgdata`)
+* [x] UI: indicador "Saved — evaluation #N" enlazado al endpoint GET
 
 ### Definition of Done
 
-* [ ] Evaluaciones sobreviven al reinicio de la aplicación
-* [ ] Migraciones reproducibles
-* [ ] API permite recuperar evaluaciones guardadas
+* [x] Evaluaciones sobreviven al reinicio de la aplicación (verificado con Postgres en docker compose: restart del API + GET por id)
+* [x] Migraciones reproducibles (verificadas en SQLite y PostgreSQL)
+* [x] API permite recuperar evaluaciones guardadas
+* [x] Tests pasan (122 passed)
 
 ---
 
@@ -587,7 +604,7 @@ v0.3  ██████████  DONE
 v0.4  ██████████  DONE
 v0.5  ██████████  DONE
 v0.6  ██████████  DONE
-v0.7  ░░░░░░░░░░  TODO
+v0.7  ██████████  DONE
 v0.8  ░░░░░░░░░░  TODO
 v0.9  ░░░░░░░░░░  TODO
 v1.0  ░░░░░░░░░░  TODO

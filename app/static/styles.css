@@ -179,6 +179,9 @@ input[type="file"] {
 .experience.ok { color: var(--good); }
 .experience.no { color: var(--bad); }
 
+.saved { color: var(--muted); font-size: 13px; }
+.saved a { color: var(--accent); }
+
 .score-ring {
   width: 120px;
   height: 120px;

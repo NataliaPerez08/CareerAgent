@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: careeragent
+      POSTGRES_PASSWORD: careeragent
+      POSTGRES_DB: careeragent
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U careeragent"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-amazon.nova-micro-v1:0}
+      DATABASE_URL: postgresql+psycopg://careeragent:careeragent@db:5432/careeragent
+    volumes:
+      - ${HOME}/.aws:/root/.aws:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

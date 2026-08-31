@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format run cli costs docker-build docker-run
+.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down
 
 install:
 	python -m pip install -e .
@@ -18,6 +18,9 @@ format:
 run:
 	uvicorn app.main:app --reload
 
+migrate:
+	alembic upgrade head
+
 cli:
 	python -m app.cli
 
@@ -29,3 +32,9 @@ docker-build:
 
 docker-run:
 	docker run --rm -p 8000:8000 -e AWS_REGION=$${AWS_REGION:-us-east-1} career-agent:dev
+
+compose-up:
+	docker compose up --build -d
+
+compose-down:
+	docker compose down
