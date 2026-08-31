@@ -209,7 +209,7 @@ execution**.
 ## Quick start
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+python3.11 -m venv .venv && source .venv/bin/activate
 make dev          # install with dev extras
 aws configure     # credentials with Bedrock access (Nova Micro)
 make run          # http://127.0.0.1:8000/  → Load example → Analyze
@@ -243,10 +243,11 @@ python -m venv .venv && source .venv/bin/activate
 make dev
 ```
 
-Without Nix (Python 3.11+):
+Without Nix (Python 3.11+ required — use the `python3.11` binary
+explicitly if your default `python3` is older):
 
 ```bash
-python3 -m venv .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 make dev
