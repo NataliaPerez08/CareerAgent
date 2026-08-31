@@ -2,22 +2,26 @@
 
 CareerAgent is an early prototype for the **Agents for Humans Hackathon**. It helps early-career software engineers evaluate whether a job is worth pursuing by comparing evidence in a resume against a job description.
 
-The first version deliberately stays small: one Strands agent, one deterministic matching tool, a CLI example, and a FastAPI endpoint.
+The first version deliberately stays small: one Strands agent, one deterministic matching core, a CLI example, and a FastAPI endpoint.
 
 ## Architecture
 
 ```text
-Resume + Job Description
-          |
-          v
-   Strands CareerAgent
-          |
-          +----> calculate_match tool
-          |
-          v
- APPLY / MAYBE / SKIP
-   + explanation
+Resume ──> LLM extraction ──> CandidateProfile (Pydantic)
+Job    ──> LLM extraction ──> JobRequirements (Pydantic)
+                  |
+                  v
+      Deterministic matching (pure code)
+      skill aliases, score, evidence validation
+                  |
+                  v
+      APPLY / MAYBE / SKIP policy (centralized thresholds)
+                  |
+                  v
+      LLM explanation ──> EvaluationResult (JSON)
 ```
+
+The LLM only extracts and explains. Scores, thresholds, and the recommendation are always computed by deterministic code, and any "evidence" quote that does not appear verbatim in the resume is dropped.
 
 ## Stack
 
@@ -103,6 +107,24 @@ curl -X POST http://127.0.0.1:8000/evaluate \
   }'
 ```
 
+The response is a structured `EvaluationResult`:
+
+```json
+{
+  "recommendation": "APPLY",
+  "score": 100,
+  "matched_skills": ["docker", "postgresql", "python", "rest api"],
+  "matched_preferred_skills": [],
+  "missing_required_skills": [],
+  "missing_preferred_skills": ["aws"],
+  "missing_critical_skills": [],
+  "unknown_requirements": [],
+  "experience_match": true,
+  "evidence": ["2 years of Python, REST APIs, PostgreSQL and Docker experience."],
+  "reasoning": "..."
+}
+```
+
 ## Docker
 
 ```bash
@@ -114,40 +136,14 @@ For actual Bedrock calls from Docker, pass AWS credentials using an appropriate 
 
 ## Roadmap
 
-### v0.1 — vertical slice
-- [x] Strands agent
-- [x] Deterministic skill matching tool
-- [x] CLI
-- [x] FastAPI endpoint
-- [x] Tests
-
-### v0.2 — structured evidence
-- [ ] Structured extraction of required vs preferred skills
-- [ ] Experience requirement matching
-- [ ] JSON/structured agent output
-- [ ] Better skill normalization and aliases
-
-### v0.3 — real inputs
-- [ ] PDF resume parser
-- [ ] Job URL ingestion
-- [ ] Evidence-backed gap analysis
-
-### v0.4 — product
-- [ ] Minimal web UI
-- [ ] Interview preparation tool
-- [ ] Company research tool
-
-### v0.5 — hackathon deployment
-- [ ] Bedrock AgentCore deployment
-- [ ] Observability/tracing
-- [ ] Evaluation suite
-- [ ] Architecture diagram
-- [ ] Public demo
-- [ ] Devpost submission material
+The versioned roadmap (v0.1 → v1.0) lives in [docs/ROADMAP.md](docs/ROADMAP.md).
+Progress is tracked there; only one version is `IN PROGRESS` at a time.
 
 ## Design principle
 
 The LLM interprets ambiguous language; deterministic code handles calculations and facts whenever possible. CareerAgent must never invent skills or experience that are absent from the resume.
+
+Skill names are normalized deterministically before comparison: lowercased, whitespace-collapsed, and unified through a small alias map (`postgres` → `postgresql`, and `rest apis`, `rest api development`, `rest api design and integration` → `rest api`), so equivalent variants from the resume and the job description are treated as the same skill.
 
 ## License
 
