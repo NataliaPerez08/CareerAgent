@@ -82,7 +82,13 @@ After AWS/Bedrock is configured:
 make cli
 ```
 
-The CLI loads `examples/resume.txt` and `examples/job.txt` and asks the Strands agent to evaluate the match.
+The CLI loads `examples/resume.txt` and `examples/job.txt` by default. It also accepts real resume files (PDF or TXT):
+
+```bash
+python -m app.cli path/to/resume.pdf path/to/job.txt
+```
+
+Resume files are validated before parsing: supported formats (`.pdf`, `.txt`), maximum size (`RESUME_MAX_SIZE_MB`, default 5 MB), empty and corrupt files are rejected, and image-only/scanned PDFs are reported instead of silently producing garbage.
 
 ## Run the API
 
@@ -96,7 +102,7 @@ Then open the generated FastAPI docs at:
 http://127.0.0.1:8000/docs
 ```
 
-Example request:
+Text request:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/evaluate \
@@ -106,6 +112,16 @@ curl -X POST http://127.0.0.1:8000/evaluate \
     "job_description": "Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker. AWS preferred."
   }'
 ```
+
+Or upload a resume file directly (PDF/TXT, multipart):
+
+```bash
+curl -X POST http://127.0.0.1:8000/evaluate/upload \
+  -F 'resume=@cv.pdf' \
+  -F 'job_description=Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker.'
+```
+
+Upload errors are explicit: `413` too large, `415` unsupported format, `422` empty/corrupt/unreadable text.
 
 The response is a structured `EvaluationResult`:
 

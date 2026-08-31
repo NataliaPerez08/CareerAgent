@@ -151,3 +151,44 @@ def test_explanation_prompt_contains_deterministic_result():
     assert "Recommendation: MAYBE" in prompt
     assert "Score: 50" in prompt
     assert "Missing required skills: aws" in prompt
+
+
+def test_evaluate_resume_file_parses_then_evaluates(monkeypatch):
+    from tests.pdfgen import make_pdf
+
+    captured = {}
+
+    def fake_evaluate(resume, job_description):
+        captured["resume"] = resume
+        captured["job"] = job_description
+        return EvaluationResult(recommendation="APPLY", score=100)
+
+    monkeypatch.setattr(service, "evaluate_candidate", fake_evaluate)
+
+    pdf = make_pdf(
+        [
+            "Backend developer with 2 years of experience.",
+            "- Python for backend services.",
+        ]
+    )
+    result = service.evaluate_resume_file(pdf, "resume.pdf", JOB)
+
+    assert result.recommendation == "APPLY"
+    assert "Backend developer with 2 years" in captured["resume"]
+    assert "Python for backend services" in captured["resume"]
+    assert captured["job"] == JOB
+
+
+def test_evaluate_resume_file_rejects_corrupt_pdf(monkeypatch):
+    monkeypatch.setattr(
+        service,
+        "evaluate_candidate",
+        lambda resume, job: (_ for _ in ()).throw(AssertionError("should not be reached")),
+    )
+
+    try:
+        service.evaluate_resume_file(b"%PDF-1.4 broken", "resume.pdf", JOB)
+    except ValueError as exc:
+        assert "Corrupt" in str(exc)
+    else:
+        raise AssertionError("expected ResumeParseError to propagate")

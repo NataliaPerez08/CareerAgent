@@ -20,6 +20,7 @@ from strands import Agent
 from app.agent import build_agent
 from app.matching import build_match_result, validate_evidence
 from app.policy import DEFAULT_POLICY, decide_recommendation
+from app.resume_parser import parse_resume
 from app.schemas import (
     CandidateProfile,
     EvaluationResult,
@@ -162,3 +163,13 @@ def evaluate_candidate(resume: str, job_description: str) -> EvaluationResult:
         evidence=profile.evidence,
         reasoning=reasoning,
     )
+
+
+def evaluate_resume_file(
+    resume_file: bytes,
+    filename: str,
+    job_description: str,
+) -> EvaluationResult:
+    """Parse a resume file (PDF/TXT) and run the evaluation pipeline."""
+    resume_text = parse_resume(resume_file, filename)
+    return evaluate_candidate(resume_text, job_description)

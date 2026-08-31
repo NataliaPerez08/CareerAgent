@@ -2,7 +2,7 @@
 
 ## Estado general
 
-**Versión actual:** `v0.3`
+**Versión actual:** `v0.4`
 **Estado:** `IN PROGRESS`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
@@ -129,7 +129,7 @@ Reemplazar el texto libre como contrato principal por resultados estructurados.
 
 ## v0.3 — Inputs reales
 
-**Estado:** `IN PROGRESS`
+**Estado:** `DONE`
 
 ### Objetivo
 
@@ -137,18 +137,19 @@ Aceptar un CV real y una descripción de vacante.
 
 ### Implementar
 
-* [ ] Upload de PDF
-* [ ] Extracción de texto
-* [ ] Limpieza del texto
-* [ ] Validación de archivos
-* [ ] Tamaño máximo
-* [ ] Manejo de PDF inválido
-* [ ] Job description pegada como texto
-* [ ] Interfaz preparada para futura URL de vacante
+* [x] Upload de PDF (`POST /evaluate/upload` multipart + CLI por argumento)
+* [x] Extracción de texto (`app/resume_parser.py`, pypdf)
+* [x] Limpieza del texto (`clean_text`: control chars, whitespace, párrafos)
+* [x] Validación de archivos (extensión, magic bytes `%PDF`)
+* [x] Tamaño máximo (`RESUME_MAX_SIZE_MB`, default 5 MB → HTTP 413)
+* [x] Manejo de PDF inválido (corrupto → 422; escaneado/sin texto → 422 con mensaje explícito)
+* [x] Interfaz multi-formato preparada para DOCX (dispatch por extensión en `parse_resume`)
+* [x] Job description pegada como texto (contrato paste-first en CLI/API)
+* [x] Interfaz preparada para futura URL de vacante (el input de vacante es texto plano; agregar URL no requiere cambios de interfaz)
 
 ### Opcional
 
-* [ ] Extracción desde URL de vacante
+* [ ] Extracción desde URL de vacante (deferred: scraping frágil/anti-bot fuera de alcance)
 
 ### Fuera de alcance inicialmente
 
@@ -158,15 +159,15 @@ Aceptar un CV real y una descripción de vacante.
 
 ### Definition of Done
 
-* [ ] PDF real puede convertirse en `CandidateProfile`
-* [ ] Vacante real puede convertirse en `JobRequirements`
-* [ ] La evaluación completa sigue funcionando
+* [x] PDF real puede convertirse en `CandidateProfile` (verificado end-to-end con Bedrock)
+* [x] Vacante real puede convertirse en `JobRequirements`
+* [x] La evaluación completa sigue funcionando (66 tests passed)
 
 ---
 
 ## v0.4 — Career Intelligence
 
-**Estado:** `TODO`
+**Estado:** `IN PROGRESS`
 
 ### Objetivo
 
@@ -541,8 +542,8 @@ DONE
 ```text
 v0.1  ██████████  DONE
 v0.2  ██████████  DONE
-v0.3  ░░░░░░░░░░  IN PROGRESS
-v0.4  ░░░░░░░░░░  TODO
+v0.3  ██████████  DONE
+v0.4  ░░░░░░░░░░  IN PROGRESS
 v0.5  ░░░░░░░░░░  TODO
 v0.6  ░░░░░░░░░░  TODO
 v0.7  ░░░░░░░░░░  TODO
