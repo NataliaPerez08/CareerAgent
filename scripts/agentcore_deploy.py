@@ -20,6 +20,8 @@ alternative deployment with the AgentCore CLI.
 """
 
 import argparse
+import json
+import os
 import zipfile
 from pathlib import Path
 
@@ -29,6 +31,9 @@ from botocore.exceptions import ClientError
 ROOT = Path(__file__).resolve().parents[1]
 STAGING = ROOT / "deploy" / "agentcore"
 DIST = ROOT / "dist" / "agentcore"
+
+DEFAULT_ROLE_NAME = "careeragent-agentcore-runtime"
+ROLE_POLICY_NAME = "CareerAgentAgentCoreRuntimePolicy"
 
 RUNTIME_CORE_MODULES = [
     "__init__.py",
@@ -154,6 +159,104 @@ def deploy(
     )
 
 
+def runtime_role_trust_policy() -> dict:
+    """Trust policy: only the AgentCore service may assume this role."""
+    return {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "TrustBedrockAgentCore",
+                "Effect": "Allow",
+                "Principal": {"Service": "bedrock-agentcore.amazonaws.com"},
+                "Action": "sts:AssumeRole",
+            }
+        ],
+    }
+
+
+def runtime_role_policy(account: str, region: str, model_id: str) -> dict:
+    """Least-privilege permissions for the runtime execution role.
+
+    Exactly what docs/deploy/agentcore.md Prerequisites documents:
+    invoke the one Bedrock model used, write AgentCore logs, read the
+    deployment package from the code bucket. Nothing else.
+    """
+    return {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "InvokeBedrockModel",
+                "Effect": "Allow",
+                "Action": "bedrock:InvokeModel",
+                "Resource": f"arn:aws:bedrock:{region}::foundation-model/{model_id}",
+            },
+            {
+                "Sid": "AgentCoreCloudWatchLogs",
+                "Effect": "Allow",
+                "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+                "Resource": "arn:aws:logs:*:*:log-group:/aws/bedrock-agentcore*",
+            },
+            {
+                "Sid": "ReadDeploymentPackage",
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": f"arn:aws:s3:::bedrock-agentcore-code-{account}-{region}/*",
+            },
+        ],
+    }
+
+
+def create_runtime_role(region: str, model_id: str, role_name: str) -> str:
+    """Create (or refresh) the least-privilege execution role. Idempotent.
+
+    Requires the caller to have iam:CreateRole and iam:PutRolePolicy
+    (option 1 in docs/deploy/agentcore.md). Returns the role ARN.
+    """
+    session = boto3.Session(region_name=region)
+    iam = session.client("iam")
+    account = session.client("sts").get_caller_identity()["Account"]
+
+    denied_hint = (
+        "IAM denied this operation. The admin grant from "
+        "docs/deploy/agentcore.md § Option 1, ready to run "
+        "(iam:CreateRole + iam:PutRolePolicy + iam:PassRole) is required first."
+    )
+    try:
+        response = iam.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=json.dumps(runtime_role_trust_policy()),
+        )
+        print(f"Created role: {response['Role']['Arn']}")
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code")
+        if code == "EntityAlreadyExistsException":
+            print(f"Role already exists: arn:aws:iam::{account}:role/{role_name}")
+        elif code in ("AccessDenied", "AccessDeniedException"):
+            raise SystemExit(f"iam:CreateRole: {exc}\n{denied_hint}") from exc
+        else:
+            raise
+    try:
+        iam.put_role_policy(
+            RoleName=role_name,
+            PolicyName=ROLE_POLICY_NAME,
+            PolicyDocument=json.dumps(runtime_role_policy(account, region, model_id)),
+        )
+    except ClientError as exc:
+        if exc.response.get("Error", {}).get("Code") in ("AccessDenied", "AccessDeniedException"):
+            raise SystemExit(f"iam:PutRolePolicy: {exc}\n{denied_hint}") from exc
+        raise
+    print(
+        f"Attached {ROLE_POLICY_NAME}: bedrock:InvokeModel on {model_id}, "
+        "AgentCore log writes, deployment-package read"
+    )
+    role_arn = f"arn:aws:iam::{account}:role/{role_name}"
+    print(
+        "Deploy with:\n"
+        f"  AGENTCORE_ROLE_ARN={role_arn} make agentcore-deploy"
+    )
+    return role_arn
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name", default="career-agent", help="AgentCore Runtime name")
@@ -169,16 +272,34 @@ def main() -> None:
         action="store_true",
         help="Only build the deployment zip under dist/agentcore/ (no AWS calls)",
     )
+    parser.add_argument(
+        "--create-role",
+        action="store_true",
+        help=(
+            "Create/refresh the least-privilege execution role "
+            f"(default name: {DEFAULT_ROLE_NAME}) and exit without deploying. "
+            "Requires iam:CreateRole + iam:PutRolePolicy."
+        ),
+    )
+    parser.add_argument(
+        "--role-name",
+        default=DEFAULT_ROLE_NAME,
+        help=f"Execution role name for --create-role (default: {DEFAULT_ROLE_NAME})",
+    )
     args = parser.parse_args()
 
-    import os
+    region = args.region or os.getenv("AWS_REGION", "us-east-1")
+    model_id = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-micro-v1:0")
+
+    if args.create_role:
+        create_runtime_role(region, model_id, args.role_name)
+        return
 
     package = build_package(args.name)
     if args.package_only:
         return
 
     role_arn = args.role_arn or os.getenv("AGENTCORE_ROLE_ARN")
-    region = args.region or os.getenv("AWS_REGION", "us-east-1")
     if not role_arn:
         raise SystemExit(
             "Deploying requires an execution role. Pass --role-arn or set "

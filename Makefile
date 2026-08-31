@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy eval eval-llm
+.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy agentcore-role eval eval-llm
 
 install:
 	python -m pip install -e .
@@ -50,6 +50,9 @@ agentcore-run:
 
 agentcore-zip:
 	python scripts/agentcore_deploy.py --package-only
+
+agentcore-role:
+	python scripts/agentcore_deploy.py --create-role
 
 agentcore-deploy:
 	python scripts/agentcore_deploy.py

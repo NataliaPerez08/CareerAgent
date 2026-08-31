@@ -210,8 +210,47 @@ cannot be self-created, `iam:CreateRole` denied).
    on the Nova model) and grant the user `bedrock-agentcore-control`
    + `iam:PassRole`.
 
-Either way, the deploy itself is one command once a role ARN exists:
+### Option 1, ready to run
+
+Option 1 is automated on our side: `make agentcore-role` creates (or
+refreshes — it is idempotent) the least-privilege execution role
+`careeragent-agentcore-runtime` with exactly the policy documented in
+Prerequisites (one model, AgentCore log writes, package read — nothing
+else; covered by unit tests in `tests/test_agentcore_deploy.py`).
+
+The only missing piece is the admin grant to the deployer user
+(`bedrook` in account `740055419949`). Exact command, least-privilege:
 
 ```bash
-AGENTCORE_ROLE_ARN=arn:aws:iam::<account>:role/<role> make agentcore-deploy
+aws iam put-user-policy --user-name bedrook \
+  --policy-name CareerAgentAgentCoreDeploy \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AgentCoreControlPlane",
+        "Effect": "Allow",
+        "Action": ["bedrock-agentcore-control:CreateAgentRuntime",
+                   "bedrock-agentcore-control:UpdateAgentRuntime",
+                   "bedrock-agentcore-control:GetAgentRuntime",
+                   "bedrock-agentcore-control:ListAgentRuntimes",
+                   "bedrock-agentcore-control:DeleteAgentRuntime"],
+        "Resource": "*"
+      },
+      {
+        "Sid": "ManageExecutionRole",
+        "Effect": "Allow",
+        "Action": ["iam:CreateRole", "iam:PutRolePolicy", "iam:PassRole"],
+        "Resource": "arn:aws:iam::740055419949:role/careeragent-agentcore-runtime"
+      }
+    ]
+  }'
+```
+
+Then, from the repo (S3 access is already granted and verified):
+
+```bash
+make agentcore-role                                          # creates/refreshes the role
+AGENTCORE_ROLE_ARN=arn:aws:iam::740055419949:role/careeragent-agentcore-runtime \
+  make agentcore-deploy                                      # zip → S3 → CreateAgentRuntime
 ```
