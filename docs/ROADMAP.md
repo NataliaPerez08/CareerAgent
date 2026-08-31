@@ -2,8 +2,8 @@
 
 ## Estado general
 
-**Versión actual:** `v0.4`
-**Estado:** `IN PROGRESS`
+**Versión actual:** `v0.5`
+**Estado:** `TODO`
 
 CareerAgent se desarrollará de forma incremental. Cada versión debe quedar funcional, probada y documentada antes de avanzar a la siguiente.
 
@@ -167,7 +167,7 @@ Aceptar un CV real y una descripción de vacante.
 
 ## v0.4 — Career Intelligence
 
-**Estado:** `IN PROGRESS`
+**Estado:** `DONE`
 
 ### Objetivo
 
@@ -175,29 +175,51 @@ Convertir CareerAgent de matcher a asistente de decisión profesional.
 
 ### Tools
 
-* [ ] `analyze_job`
-* [ ] `normalize_skills`
-* [ ] `calculate_match`
-* [ ] `identify_skill_gaps`
-* [ ] `generate_interview_plan`
+* [x] `analyze_job` (clasificación/normalización determinista de requerimientos)
+* [x] `normalize_skills` (nombres canónicos para el agente)
+* [x] `calculate_match` (existente, ahora parte del workflow de 5 tools)
+* [x] `identify_skill_gaps` (gaps con severidad: critical > required > preferred)
+* [x] `generate_interview_plan` (valida y ensambla el plan drafted por el agente)
 
 ### Opcional
 
-* [ ] `research_company`
+* [ ] `research_company` (deferred: fetch web externo, fuera del core de decisión)
 
 ### Output adicional
 
-* [ ] strengths
-* [ ] skill gaps
-* [ ] interview topics
-* [ ] preparation plan
-* [ ] explanation grounded in evidence
+* [x] strengths (100% determinista, derivados del match — nunca redactados por el LLM)
+* [x] skill gaps con severidad y preparation steps (severidad siempre de código)
+* [x] interview topics (LLM redacta, código deduplica/limita)
+* [x] preparation plan (aplanado, ordenado por severidad)
+* [x] explanation grounded in evidence (prompt extendido con strengths y gaps)
+
+### Workflow verificado
+
+```text
+Agent
+ ├── analyze_job
+ ├── normalize_skills
+ ├── calculate_match
+ ├── identify_skill_gaps
+ └── generate_interview_plan
+```
+
+Verificado con Nova Micro: el agente invoca las 5 tools en orden en una
+sola ejecución (modo `--chat`).
+
+### Correcciones de comportamiento del modelo (prompt/normalización, sin cambiar de modelo)
+
+* [x] Strip determinista de bloques `<thinking>` filtrados (`clean_reasoning`)
+* [x] Eliminación de palabras de contexto en skills ("AWS experience" → "aws")
+* [x] "Requirements:" ya no se interpreta como crítico (crítico = lenguaje explícito)
 
 ### Definition of Done
 
-* [ ] El agente utiliza varias tools de forma coherente
-* [ ] El workflow puede explicarse claramente en una demo
-* [ ] Cada conclusión relevante tiene evidencia o estado `unknown`
+* [x] El agente utiliza varias tools de forma coherente (5/5 en orden)
+* [x] El workflow puede explicarse claramente en una demo (CLI `--chat` + pipeline)
+* [x] Cada conclusión relevante tiene evidencia o estado `unknown`
+* [x] Tests pasan (101 passed)
+* [x] CLI/API verificados end-to-end con Bedrock
 
 ---
 
@@ -543,7 +565,7 @@ DONE
 v0.1  ██████████  DONE
 v0.2  ██████████  DONE
 v0.3  ██████████  DONE
-v0.4  ░░░░░░░░░░  IN PROGRESS
+v0.4  ██████████  DONE
 v0.5  ░░░░░░░░░░  TODO
 v0.6  ░░░░░░░░░░  TODO
 v0.7  ░░░░░░░░░░  TODO

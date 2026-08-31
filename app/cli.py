@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+from app.agent import run_agent_workflow
 from app.resume_parser import parse_resume
 from app.service import evaluate_candidate
 
@@ -23,6 +24,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to a job description text file. Defaults to examples/job.txt.",
     )
+    parser.add_argument(
+        "--chat",
+        action="store_true",
+        help=(
+            "Demo mode: run the Strands agent free loop through the five-tool "
+            "workflow instead of the structured pipeline."
+        ),
+    )
     return parser
 
 
@@ -34,6 +43,10 @@ def main(argv: list[str] | None = None) -> None:
 
     resume_text = parse_resume(resume_path.read_bytes(), resume_path.name)
     job_text = job_path.read_text()
+
+    if args.chat:
+        print(run_agent_workflow(resume_text, job_text))
+        return
 
     result = evaluate_candidate(resume_text, job_text)
     print(result.model_dump_json(indent=2))

@@ -1,4 +1,4 @@
-from app.schemas import CandidateProfile, EvaluationResult, JobRequirements
+from app.schemas import CandidateProfile, EvaluationResult, JobRequirements, SkillGap
 
 
 def test_candidate_profile_defaults():
@@ -47,3 +47,42 @@ def test_evaluation_result_serializes_expected_contract():
     assert payload["recommendation"] == "APPLY"
     assert payload["score"] == 85
     assert payload["missing_required_skills"] == ["aws"]
+
+
+def test_evaluation_result_defaults_career_intelligence_fields():
+    result = EvaluationResult(recommendation="APPLY", score=85)
+
+    assert result.strengths == []
+    assert result.skill_gaps == []
+    assert result.interview_topics == []
+    assert result.preparation_plan == []
+
+
+def test_evaluation_result_serializes_skill_gaps():
+    result = EvaluationResult(
+        recommendation="MAYBE",
+        score=50,
+        skill_gaps=[
+            SkillGap(
+                skill="aws",
+                severity="required",
+                preparation_steps=["IAM fundamentals", "S3"],
+            )
+        ],
+        interview_topics=["PostgreSQL indexes"],
+        preparation_plan=["aws: IAM fundamentals", "aws: S3"],
+        strengths=["Meets 1 of 2 required skills: python"],
+    )
+
+    payload = result.model_dump()
+
+    assert payload["skill_gaps"] == [
+        {
+            "skill": "aws",
+            "severity": "required",
+            "preparation_steps": ["IAM fundamentals", "S3"],
+        }
+    ]
+    assert payload["interview_topics"] == ["PostgreSQL indexes"]
+    assert payload["preparation_plan"] == ["aws: IAM fundamentals", "aws: S3"]
+    assert payload["strengths"] == ["Meets 1 of 2 required skills: python"]

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="CareerAgent API",
-    version="0.3.0",
+    version="0.4.0",
     description="Evaluate a resume against a job description using a Strands agent.",
 )
 

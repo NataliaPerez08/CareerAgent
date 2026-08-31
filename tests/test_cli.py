@@ -66,3 +66,41 @@ def test_cli_rejects_unsupported_resume_format(tmp_path):
 def test_examples_resume_exists():
     assert (Path(cli.ROOT) / "examples" / "resume.txt").exists()
     assert (Path(cli.ROOT) / "examples" / "job.txt").exists()
+
+
+def test_cli_chat_mode_runs_agent_workflow(monkeypatch, capsys):
+    captured = {}
+
+    def fake_run_agent_workflow(resume_text, job_text):
+        captured["resume"] = resume_text
+        captured["job"] = job_text
+        return "RECOMMENDATION: APPLY (agent workflow demo)"
+
+    monkeypatch.setattr(cli, "run_agent_workflow", fake_run_agent_workflow)
+
+    cli.main(["--chat"])
+
+    assert "Backend developer with 2 years" in captured["resume"]
+    assert "Junior Backend Engineer" in captured["job"]
+    assert "RECOMMENDATION: APPLY" in capsys.readouterr().out
+
+
+def test_cli_chat_mode_uses_passed_files(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_run_agent_workflow(resume_text, job_text):
+        captured["resume"] = resume_text
+        captured["job"] = job_text
+        return "answer"
+
+    monkeypatch.setattr(cli, "run_agent_workflow", fake_run_agent_workflow)
+
+    resume_txt = tmp_path / "resume.txt"
+    resume_txt.write_text("Backend developer with 2 years of experience. Python.")
+    job_txt = tmp_path / "job.txt"
+    job_txt.write_text("Junior backend engineer. Requires Python.")
+
+    cli.main([str(resume_txt), str(job_txt), "--chat"])
+
+    assert "Python." in captured["resume"]
+    assert "Requires Python" in captured["job"]

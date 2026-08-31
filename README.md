@@ -1,27 +1,45 @@
 # CareerAgent
 
-CareerAgent is an early prototype for the **Agents for Humans Hackathon**. It helps early-career software engineers evaluate whether a job is worth pursuing by comparing evidence in a resume against a job description.
-
-The first version deliberately stays small: one Strands agent, one deterministic matching core, a CLI example, and a FastAPI endpoint.
+CareerAgent is an early prototype for the **Agents for Humans Hackathon**. It helps early-career software engineers evaluate whether a job is worth pursuing by comparing evidence in a resume against a job description, and tells them how to prepare for it.
 
 ## Architecture
 
 ```text
 Resume ──> LLM extraction ──> CandidateProfile (Pydantic)
 Job    ──> LLM extraction ──> JobRequirements (Pydantic)
-                  |
-                  v
-      Deterministic matching (pure code)
-      skill aliases, score, evidence validation
-                  |
-                  v
-      APPLY / MAYBE / SKIP policy (centralized thresholds)
-                  |
-                  v
-      LLM explanation ──> EvaluationResult (JSON)
+                   |
+                   v
+       Job analysis (analyze_job core: normalize, classify, dedupe)
+                   |
+                   v
+       Deterministic matching (calculate_match core)
+       skill aliases, score, evidence validation
+                   |
+                   v
+       APPLY / MAYBE / SKIP policy (centralized thresholds)
+                   |
+                   v
+       Gap analysis (identify_skill_gaps core: severity ranking)
+                   |
+                   v
+       LLM career plan draft ──> code validation (generate_interview_plan core)
+                   |
+                   v
+       LLM explanation ──> EvaluationResult (JSON)
 ```
 
-The LLM only extracts and explains. Scores, thresholds, and the recommendation are always computed by deterministic code, and any "evidence" quote that does not appear verbatim in the resume is dropped.
+The LLM only extracts, drafts preparation content, and explains. Scores, thresholds, recommendations, gap severity, strengths, and the final validation of every drafted step are always computed by deterministic code. Any "evidence" quote that does not appear verbatim in the resume is dropped, and preparation steps are only accepted for skills that are actually missing.
+
+The same cores power the Strands agent tool workflow:
+
+```text
+Agent
+ ├── analyze_job
+ ├── normalize_skills
+ ├── calculate_match
+ ├── identify_skill_gaps
+ └── generate_interview_plan
+```
 
 ## Stack
 
@@ -88,6 +106,12 @@ The CLI loads `examples/resume.txt` and `examples/job.txt` by default. It also a
 python -m app.cli path/to/resume.pdf path/to/job.txt
 ```
 
+To demo the Strands agent running the five-tool workflow in its free loop (opt-in; the structured pipeline above remains the main contract):
+
+```bash
+python -m app.cli --chat
+```
+
 Resume files are validated before parsing: supported formats (`.pdf`, `.txt`), maximum size (`RESUME_MAX_SIZE_MB`, default 5 MB), empty and corrupt files are rejected, and image-only/scanned PDFs are reported instead of silently producing garbage.
 
 ## Run the API
@@ -137,9 +161,24 @@ The response is a structured `EvaluationResult`:
   "unknown_requirements": [],
   "experience_match": true,
   "evidence": ["2 years of Python, REST APIs, PostgreSQL and Docker experience."],
+  "strengths": [
+    "Meets 4 of 4 required skills: docker, postgresql, python, rest api",
+    "Experience requirement met: 2 years"
+  ],
+  "skill_gaps": [
+    {
+      "skill": "aws",
+      "severity": "preferred",
+      "preparation_steps": ["IAM fundamentals", "S3", "Lambda", "API Gateway"]
+    }
+  ],
+  "interview_topics": ["PostgreSQL indexes", "REST design", "Docker networking"],
+  "preparation_plan": ["aws: IAM fundamentals", "aws: S3", "aws: Lambda", "aws: API Gateway"],
   "reasoning": "..."
 }
 ```
+
+Strengths and gap severity are always computed by deterministic code; the LLM only drafts the preparation content, which code then validates (steps for skills that are not actually missing are dropped).
 
 ## Docker
 
@@ -159,7 +198,7 @@ Progress is tracked there; only one version is `IN PROGRESS` at a time.
 
 The LLM interprets ambiguous language; deterministic code handles calculations and facts whenever possible. CareerAgent must never invent skills or experience that are absent from the resume.
 
-Skill names are normalized deterministically before comparison: lowercased, whitespace-collapsed, and unified through a small alias map (`postgres` → `postgresql`, and `rest apis`, `rest api development`, `rest api design and integration` → `rest api`), so equivalent variants from the resume and the job description are treated as the same skill.
+Skill names are normalized deterministically before comparison: lowercased, whitespace-collapsed, unified through a small alias map (`postgres` → `postgresql`, and `rest apis`, `rest api development`, `rest api design and integration` → `rest api`), and stripped of context words models tend to attach (`AWS experience` → `aws`, `Familiarity with CI/CD` → `ci/cd`), so equivalent variants from the resume and the job description are treated as the same skill.
 
 ## License
 
