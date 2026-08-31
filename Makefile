@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format run cli docker-build docker-run
+.PHONY: install dev test lint format run cli costs docker-build docker-run
 
 install:
 	python -m pip install -e .
@@ -20,6 +20,9 @@ run:
 
 cli:
 	python -m app.cli
+
+costs:
+	python scripts/aws_costs.py
 
 docker-build:
 	docker build -t career-agent:dev .

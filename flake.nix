@@ -19,6 +19,8 @@
             awscli2
             git
             gnumake
+            ruff
+            opencode
           ];
 
           shellHook = ''
