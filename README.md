@@ -117,7 +117,7 @@ core ever depending on any of them.
 **AgentCore status:** the runtime adapter, deployment package and docs
 are implemented and validated locally, but the live deployment is
 currently **blocked by IAM permissions** in our AWS account (no
-`bedrock-agentcore-control`/S3 access) — see
+`bedrock-agentcore-control` access and no execution role) — see
 [`docs/deploy/agentcore.md`](docs/deploy/agentcore.md). It is a
 planned deployment, not an active production component.
 

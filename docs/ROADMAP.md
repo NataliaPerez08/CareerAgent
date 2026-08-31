@@ -390,10 +390,12 @@ Resume + Job ──> Evaluation
 > El código, la configuración, los tests y la documentación de deployment están
 > DONE y verificados localmente. El deploy real queda `BLOCKED`: reintentado en
 > v1.0 con credenciales válidas (Bedrock funciona — evals y API local corren
-> contra Nova Micro), pero el IAM user carece de permisos `bedrock-agentcore-control`
-> y S3. Log exacto del intento (comando, error, servicio, permiso) en
-> `docs/deploy/agentcore.md` § "Deployment attempt log". No se claima endpoint
-> desplegado en README/video/submission.
+> contra Nova Micro; S3 fue habilitado posteriormente), pero el IAM user sigue
+> sin permisos `bedrock-agentcore-control` y no existe (ni podemos crear,
+> `iam:CreateRole` denegado) el rol de ejecución. Log exacto de ambos intentos
+> (comando, error, servicio, permiso) en `docs/deploy/agentcore.md` §
+> "Deployment attempt log". No se claima endpoint desplegado en
+> README/video/submission.
 
 ### Objetivo
 

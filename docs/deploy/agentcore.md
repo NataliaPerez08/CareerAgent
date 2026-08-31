@@ -181,8 +181,37 @@ deployment flow requires (S3 upload of the package +
 `CreateAgentRuntime`). No execution role trusted by
 `bedrock-agentcore.amazonaws.com` exists in the account either.
 
-To unblock: grant the user `bedrock-agentcore-control` + S3 permissions
-(or run `make agentcore-deploy` from a role that has them) and create
-the execution role from [Prerequisites](#prerequisites). The deploy
-itself is one command and was validated package-wise via
-`make agentcore-zip`.
+### Re-check (2026-09-01, later same day)
+
+Permissions were re-probed after an account change. The blocker
+**narrowed but v0.8 remains BLOCKED**:
+
+| Permission probe | Result (v1.0 attempt → re-check) |
+|---|---|
+| `sts.get_caller_identity` | OK → OK (same identity) |
+| `bedrock-runtime.invoke_model` (Nova Micro) | OK → OK |
+| `s3.list_buckets` / `s3.create_bucket` | **AccessDenied → OK** (granted) |
+| `bedrock-agentcore-control.list_agent_runtimes` | AccessDenied → **still AccessDenied** |
+| `iam.create_role` | (not probed) → **AccessDenied** |
+| Execution role trusted by AgentCore | none → **none** |
+
+With S3 now open, the package upload path works — but deployment is
+still impossible from this identity because `bedrock-agentcore-control`
+is denied (no `CreateAgentRuntime`) and no execution role exists (and
+cannot be self-created, `iam:CreateRole` denied).
+
+**To unblock (admin action, either):**
+
+1. Grant the user `bedrock-agentcore-control` permissions plus
+   `iam:CreateRole`/`PutRolePolicy`/`iam:PassRole` (we then create the
+   execution role ourselves), **or**
+2. Create the execution role from [Prerequisites](#prerequisites)
+   (trust `bedrock-agentcore.amazonaws.com`, allow `bedrock:InvokeModel`
+   on the Nova model) and grant the user `bedrock-agentcore-control`
+   + `iam:PassRole`.
+
+Either way, the deploy itself is one command once a role ARN exists:
+
+```bash
+AGENTCORE_ROLE_ARN=arn:aws:iam::<account>:role/<role> make agentcore-deploy
+```
