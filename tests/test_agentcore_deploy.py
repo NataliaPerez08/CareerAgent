@@ -1,8 +1,10 @@
 import json
+import zipfile
 
 from scripts.agentcore_deploy import (
     DEFAULT_ROLE_NAME,
     ROLE_POLICY_NAME,
+    build_package,
     runtime_role_policy,
     runtime_role_trust_policy,
 )
@@ -62,3 +64,14 @@ def test_policies_serialize_to_valid_json():
 def test_role_naming_constants_are_stable():
     assert DEFAULT_ROLE_NAME == "careeragent-agentcore-runtime"
     assert ROLE_POLICY_NAME == "CareerAgentAgentCoreRuntimePolicy"
+
+
+def test_build_package_without_vendor_has_code_only():
+    package = build_package("__unit_test_pkg", vendor=False)
+    names = zipfile.ZipFile(package).namelist()
+    assert "main.py" in names
+    assert "requirements.txt" in names
+    assert "app/service.py" in names
+    assert "app/agentcore_runtime.py" in names
+    assert not any(n.split("/", 1)[0] in {"strands", "pydantic"} for n in names)
+    package.unlink(missing_ok=True)

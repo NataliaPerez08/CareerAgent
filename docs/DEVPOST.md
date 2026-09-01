@@ -102,6 +102,7 @@ can run on AWS Bedrock AgentCore Runtime.
 Python, Strands Agents SDK, Amazon Bedrock, Amazon Nova, FastAPI,
 PostgreSQL, SQLAlchemy, Alembic, Docker, Nix, pytest.
 
-(AgentCore runtime support is implemented and documented, but the live
-deployment is blocked by IAM permissions in our AWS account — see
-`docs/deploy/agentcore.md`. We don't claim a deployed endpoint.)
+(AgentCore runtime support is implemented and documented; a runtime is
+deployed and READY, but remote invocation returns an HTTP 500 from the
+runtime sandbox — see `docs/deploy/agentcore.md`. We don't claim a working
+deployed endpoint.)

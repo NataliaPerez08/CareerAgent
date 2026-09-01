@@ -115,11 +115,15 @@ web UI, and an Amazon Bedrock AgentCore Runtime adapter — without the
 core ever depending on any of them.
 
 **AgentCore status:** the runtime adapter, deployment package and docs
-are implemented and validated locally, but the live deployment is
-currently **blocked by IAM permissions** in our AWS account (no
-`bedrock-agentcore-control` access and no execution role) — see
-[`docs/deploy/agentcore.md`](docs/deploy/agentcore.md). It is a
-planned deployment, not an active production component.
+are implemented and validated locally. A live runtime (`career_agent`) is
+deployed and **READY** with the core and ARM64-vendored dependencies;
+control plane, execution role and invoke permissions work. Remote
+invocation, however, currently returns an HTTP 500 from the runtime sandbox
+(no CloudWatch logs were exposed to diagnose it; the identical code returns
+a correct result locally) — see
+[`docs/deploy/agentcore.md`](docs/deploy/agentcore.md). It is therefore a
+**planned/experimental deployment**, not an active production component; no
+live invoke is claimed in the demo, video or submission.
 
 ## Why agentic?
 
@@ -361,9 +365,10 @@ Honest ones:
   should still read the job posting.
 - PDF parsing works for text-based PDFs; scanned/image-only PDFs are
   detected and rejected, not OCR'd.
-- The AgentCore deployment is blocked by IAM permissions in our AWS
-  account (documented in `docs/deploy/agentcore.md`); we do not claim a
-  deployed endpoint.
+- The AgentCore runtime is deployed and READY, but remote invocation
+  returns an HTTP 500 from the runtime sandbox (documented in
+  `docs/deploy/agentcore.md`); we do not claim a working deployed
+  endpoint in the demo/submission.
 
 ## Roadmap
 

@@ -22,6 +22,8 @@ alternative deployment with the AgentCore CLI.
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import zipfile
 from pathlib import Path
 
@@ -53,17 +55,78 @@ ENTRYPOINT = ["main.py"]
 IDLE_TIMEOUT_SECONDS = 300
 MAX_LIFETIME_SECONDS = 1800
 
+# Bedrock AgentCore Runtime is ARM64 (aarch64) only. Source/code deploy does
+# NOT `pip install requirements.txt` at startup — dependencies must be
+# vendored into the zip as arm64 wheels, or the container crashes on import
+# (surfaced misleadingly as "Runtime initialization time exceeded").
+# See https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-code-deploy-common-issues.html
+VENDOR_PYTHON_VERSION = "3.13"
+VENDOR_PLATFORM = "aarch64-manylinux_2_17"
 
-def build_package(name: str) -> Path:
-    """Build the deployment zip: core modules + entrypoint + requirements."""
+
+def _vendor_dependencies(target: Path) -> None:
+    """Install the runtime requirements as arm64 wheels into `target`.
+
+    Requires `uv` on PATH (pip lacks a clean --python-platform port). Uses
+    --only-binary=:all: so we never ship locally-built x86_64 binaries.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "uv",
+                "pip",
+                "install",
+                "--python-platform",
+                VENDOR_PLATFORM,
+                "--python-version",
+                VENDOR_PYTHON_VERSION,
+                "--only-binary=:all:",
+                "--target",
+                str(target),
+                "-r",
+                str(STAGING / "requirements.txt"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise SystemExit(
+            "`uv` is required to vendor arm64 dependencies. Install it "
+            "(https://docs.astral.sh/uv/) and try again, or pass --no-vendor."
+        ) from exc
+    if result.returncode != 0:
+        raise SystemExit(f"uv pip install failed:\n{result.stderr}")
+    print(f"Vendored arm64 dependencies -> {target}")
+
+
+def build_package(name: str, vendor: bool = True) -> Path:
+    """Build the deployment zip: core modules + entrypoint + requirements.
+
+    When `vendor` is true (default) the runtime dependencies are installed
+    as arm64 wheels into a staging dir and merged into the zip, so the
+    AgentCore Runtime can import them without a startup install. The zip is
+    kept under the 250 MB code-deploy limit.
+    """
     DIST.mkdir(parents=True, exist_ok=True)
     target = DIST / f"{name}-deployment_package.zip"
 
-    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
+    vendor_dir: Path | None = None
+    if vendor:
+        vendor_dir = DIST / f"{name}-vendor"
+        if vendor_dir.exists():
+            shutil.rmtree(vendor_dir)
+        _vendor_dependencies(vendor_dir)
+
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as archive:
         archive.write(STAGING / "main.py", "main.py")
         archive.write(STAGING / "requirements.txt", "requirements.txt")
         for module in RUNTIME_CORE_MODULES:
             archive.write(ROOT / "app" / module, f"app/{module}")
+        if vendor_dir is not None:
+            for path in sorted(vendor_dir.rglob("*")):
+                if path.is_file():
+                    archive.write(path, path.relative_to(vendor_dir).as_posix())
 
     included = zipfile.ZipFile(target).namelist()
     print(f"Package built: {target} ({target.stat().st_size} bytes, {len(included)} files)")
@@ -137,10 +200,12 @@ def deploy(
             "ResourceInUseException",
         }:
             raise
+        runtime = _find_runtime(client, name)
         response = client.update_agent_runtime(
-            agentRuntimeIdentifier=name,
+            agentRuntimeId=runtime,
             agentRuntimeArtifact=_artifact(bucket, name),
             roleArn=role_arn,
+            networkConfiguration={"networkMode": "PUBLIC"},
             lifecycleConfiguration=_lifecycle(),
         )
         action = "Updated"
@@ -156,6 +221,16 @@ def deploy(
         '\'{"resume_text": "...", "job_description": "..."}\'\n'
         "or with boto3 (bedrock-agentcore data plane, InvokeAgentRuntime) — "
         "see docs/deploy/agentcore.md"
+    )
+
+
+def _find_runtime(client, name: str) -> str:
+    """Resolve the current agentRuntimeId for a runtime by name."""
+    for runtime in client.list_agent_runtimes().get("agentRuntimes", []):
+        if runtime.get("agentRuntimeName") == name:
+            return runtime["agentRuntimeId"]
+    raise SystemExit(
+        f"Runtime '{name}' not found; cannot update. Deploy a new name instead."
     )
 
 
@@ -286,6 +361,15 @@ def main() -> None:
         default=DEFAULT_ROLE_NAME,
         help=f"Execution role name for --create-role (default: {DEFAULT_ROLE_NAME})",
     )
+    parser.add_argument(
+        "--no-vendor",
+        action="store_true",
+        help=(
+            "Skip vendoring arm64 dependencies into the zip (only code + "
+            "requirements). Faster to build, but the deployed runtime will "
+            "fail to import dependencies on start."
+        ),
+    )
     args = parser.parse_args()
 
     region = args.region or os.getenv("AWS_REGION", "us-east-1")
@@ -295,7 +379,7 @@ def main() -> None:
         create_runtime_role(region, model_id, args.role_name)
         return
 
-    package = build_package(args.name)
+    package = build_package(args.name, vendor=not args.no_vendor)
     if args.package_only:
         return
 

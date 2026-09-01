@@ -385,17 +385,26 @@ Resume + Job ──> Evaluation
 
 ## v0.8 — AWS AgentCore
 
-**Estado:** `BLOCKED (deployment)`
+**Estado:** `PARTIAL (runtime deployed & READY; remote invoke 500)`
 
-> El código, la configuración, los tests y la documentación de deployment están
-> DONE y verificados localmente. El deploy real queda `BLOCKED`: reintentado en
-> v1.0 con credenciales válidas (Bedrock funciona — evals y API local corren
-> contra Nova Micro; S3 fue habilitado posteriormente), pero el IAM user sigue
-> sin permisos `bedrock-agentcore-control` y no existe (ni podemos crear,
-> `iam:CreateRole` denegado) el rol de ejecución. Log exacto de ambos intentos
-> (comando, error, servicio, permiso) en `docs/deploy/agentcore.md` §
-> "Deployment attempt log". No se claima endpoint desplegado en
-> README/video/submission.
+> El despliegue real se logró gracias a cooperación IAM del admin y a corregir
+> dos causas raíz:
+> 1. **Prefijo de acciones**: AgentCore usa el prefijo IAM `bedrock-agentcore:`
+>    (no `bedrock-agentcore-control:`) — el grant inicial no matcheaba nada.
+> 2. **Arquitectura ARM64 + dependencias vendored**: AgentCore Runtime es solo
+>    aarch64 y **no instala `requirements.txt` en cold start** — las deps deben
+>    venderse como wheels arm64 en el zip. El venv local era x86_64, por eso el
+>    runtime moría en import (mascarado como "initialization time exceeded").
+>
+> Estado actual: runtime `career_agent-FU4ZcW236R` desplegado y **READY** (v3)
+> con nuestro core y empaquetado arm64 vendored; control-plane, rol de
+> ejecución, permisos de invocación y data plane funcionan. Falla restante: la
+> **invocación remota devuelve 500 del runtime**. El mismo código devuelve un
+> `EvaluationResult` correcto localmente (SKIP, 44), por lo que el 500 es
+> ambiente-específico del sandbox; AgentCore no expuso logs de CloudWatch para
+> diagnosticarlo (grupos vacíos/0). No se claima invocación remota funcional en
+> README/video/submission. Detalle en `docs/deploy/agentcore.md` §
+> "Deployment attempt log".
 
 ### Objetivo
 
@@ -413,12 +422,15 @@ Desplegar el agente usando servicios administrados de AWS.
 * [x] Docs reproducibles: `docs/deploy/agentcore.md` (prerequisitos, rol de ejecución, deploy, invocación, observabilidad, alternativa CLI `@aws/agentcore`)
 * [x] Tests: 13 nuevos (handler text/b64/errores + protocolo `/ping` y `/invocations` con TestClient)
 * [x] `bedrock-agentcore` como extra opcional `[agentcore]` (no es dependencia del core ni del API local)
+* [x] Creación de rol de ejecución automatizada: `scripts/agentcore_deploy.py --create-role` / `make agentcore-role` (idempotente, política least-privilege cubierta por unit tests en `tests/test_agentcore_deploy.py`)
+* [x] Corrección del grant admin: prefijo correcto `bedrock-agentcore:*` + lectura de logs (comando listo en `docs/deploy/agentcore.md` § "Option 1, ready to run")
+* [x] Empaquetado ARM64 vendored: `build_package(..., vendor=True)` (uv pip --python-platform aarch64-manylinux_2_17, --only-binary=:all:) incluye las deps como wheels arm64 en el zip (29 MB, <.so> aarch64 verificado)
 
-### Pendiente (requiere credenciales AWS)
+### Pendiente (bloqueo del runtime, requiere diagnóstico en la cuenta)
 
-* [ ] Ejecutar `make agentcore-deploy` contra una cuenta real
-* [ ] Demo remota funcional (InvokeAgentRuntime)
-* [ ] Verificar traces en CloudWatch Transaction Search
+* [x] `make agentcore-deploy` contra la cuenta real — **DONE** (runtime READY v3)
+* [ ] Demo remota funcional (InvokeAgentRuntime) — **falla con 500 del runtime**, sin logs accesibles; mismo código OK local
+* [ ] Verificar traces en CloudWatch Transaction Search — no visible (0 grupos de logs en la cuenta)
 
 ### Restricción
 

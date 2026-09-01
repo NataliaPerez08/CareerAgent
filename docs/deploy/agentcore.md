@@ -200,6 +200,26 @@ still impossible from this identity because `bedrock-agentcore-control`
 is denied (no `CreateAgentRuntime`) and no execution role exists (and
 cannot be self-created, `iam:CreateRole` denied).
 
+### Re-check (2026-09-01, final)
+
+The admin grant (`CareerAgentAgentCoreDeploy` inline policy on
+`bedrook`) was applied, and the execution role now **exists** with the
+least-privilege policy attached. The remaining `AccessDeniedException`
+had a specific cause: **the IAM action prefix is `bedrock-agentcore:`,
+not `bedrock-agentcore-control:`.** The grant initially used the wrong
+prefix, so no identity-based policy matched. The denial message:
+
+```text
+User ... is not authorized to perform: bedrock-agentcore:ListAgentRuntimes
+```
+
+Fix: use `bedrock-agentcore:*` for the AgentCore actions (control **and**
+data plane — deployment via code also needs `CreateAgentRuntimeEndpoint`
+/ `InvokeAgentRuntime`; the wildcard avoids a per-action whack-a-mole for
+a dev/hackathon deployer). See the actual denial messages during the
+attempt below. After the corrected grant is applied and propagated,
+`bedrook` can deploy and invoke.
+
 **To unblock (admin action, either):**
 
 1. Grant the user `bedrock-agentcore-control` permissions plus
@@ -219,7 +239,10 @@ Prerequisites (one model, AgentCore log writes, package read — nothing
 else; covered by unit tests in `tests/test_agentcore_deploy.py`).
 
 The only missing piece is the admin grant to the deployer user
-(`bedrook` in account `740055419949`). Exact command, least-privilege:
+(`bedrook` in account `740055419949`). Exact command, least-privilege.
+Note the IAM actions use the **`bedrock-agentcore:`** prefix (the SDK
+client is `bedrock-agentcore-control`, but the IAM action prefix is
+`bedrock-agentcore:` — see the actual denial message below):
 
 ```bash
 aws iam put-user-policy --user-name bedrook \
@@ -230,11 +253,7 @@ aws iam put-user-policy --user-name bedrook \
       {
         "Sid": "AgentCoreControlPlane",
         "Effect": "Allow",
-        "Action": ["bedrock-agentcore-control:CreateAgentRuntime",
-                   "bedrock-agentcore-control:UpdateAgentRuntime",
-                   "bedrock-agentcore-control:GetAgentRuntime",
-                   "bedrock-agentcore-control:ListAgentRuntimes",
-                   "bedrock-agentcore-control:DeleteAgentRuntime"],
+        "Action": ["bedrock-agentcore:*"],
         "Resource": "*"
       },
       {
@@ -254,3 +273,42 @@ make agentcore-role                                          # creates/refreshes
 AGENTCORE_ROLE_ARN=arn:aws:iam::740055419949:role/careeragent-agentcore-runtime \
   make agentcore-deploy                                      # zip → S3 → CreateAgentRuntime
 ```
+
+### Outcome (2026-09-01, final)
+
+The grant was applied by the account owner and the deployment succeeded as
+far as the service allows:
+
+| Step | Result |
+|---|---|
+| Execution role `careeragent-agentcore-runtime` | ✅ created, least-privilege policy attached |
+| Control plane `bedrock-agentcore:*` on `bedrook` | ✅ works |
+| `make agentcore-deploy` | ✅ runtime `career_agent` **READY (v3)**, core deployed |
+| Data plane `InvokeAgentRuntime` | ✅ permission works (request reaches runtime) |
+| **Remote invoke** | ⚠️ runtime returns **HTTP 500**; no CloudWatch logs were exposed to diagnose (0 log groups in account) |
+
+**Two root causes were found and fixed along the way:**
+
+1. **Wrong IAM action prefix.** AgentCore's IAM actions are
+   `bedrock-agentcore:*`, not `bedrock-agentcore-control:*`. The initial
+   grant matched nothing; the error message
+   `... not authorized to perform: bedrock-agentcore:ListAgentRuntimes`
+   revealed the correct prefix.
+
+2. **AgentCore Runtime is ARM64-only and does NOT `pip install`
+   `requirements.txt` at startup.** Dependencies must be vendored into the
+   zip as **aarch64 wheels**; otherwise the container crashes on import,
+   misleadingly reported as `Runtime initialization time exceeded`.
+   `build_package()` now vendors them via
+   `uv pip install --python-platform aarch64-manylinux_2_17 --python-version 3.13
+   --only-binary=:all: --target ...` and merges them into the zip
+   (`--no-vendor` disables it). Verified: all `.so` in the zip are
+   `ARM aarch64`; zip is ~29 MB (well under the 250 MB code-deploy limit).
+
+The remaining remote-invoke 500 occurs only inside the AgentCore sandbox:
+the identical code path returns a correct `EvaluationResult` locally
+(e.g. demo → SKIP, score 44). Without accessible runtime logs the sandbox
+error can't be narrowed further from this identity. The conclusion is
+recorded as such — no live invoke is claimed for the demo/video/submission,
+and the core remains fully testable locally (`make test`, `make run`,
+`make agentcore-run`).
