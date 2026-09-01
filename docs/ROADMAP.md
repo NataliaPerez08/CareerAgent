@@ -537,7 +537,7 @@ Congelar funcionalidad y preparar la entrega. No se agregaron features nuevas.
 
 * [x] Flujo end-to-end estable (verificado: local, Docker, Bedrock real)
 * [x] UI funcional (demo de un clic: Load example → Analyze)
-* [ ] Deployment público — `v0.8` sigue BLOCKED (permisos IAM de AgentCore); no se claima endpoint desplegado
+* [ ] Deployment público — runtime AgentCore desplegado y READY, pero la invocación remota devuelve 500 (limitación documentada en v0.8 y `docs/deploy/agentcore.md`); no se claima endpoint funcional
 * [x] Tests estables (219 passed)
 * [x] Eval report (ejecución final registrada en README con fecha/modelo/config)
 
