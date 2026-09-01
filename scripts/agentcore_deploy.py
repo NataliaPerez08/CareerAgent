@@ -50,7 +50,7 @@ RUNTIME_CORE_MODULES = [
     "tools.py",
 ]
 
-RUNTIME = "PYTHON_3_13"
+RUNTIME = "PYTHON_3_11"
 ENTRYPOINT = ["main.py"]
 IDLE_TIMEOUT_SECONDS = 300
 MAX_LIFETIME_SECONDS = 1800
@@ -60,7 +60,14 @@ MAX_LIFETIME_SECONDS = 1800
 # vendored into the zip as arm64 wheels, or the container crashes on import
 # (surfaced misleadingly as "Runtime initialization time exceeded").
 # See https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-code-deploy-common-issues.html
-VENDOR_PYTHON_VERSION = "3.13"
+#
+# Python version MUST match the runtime (RUNTIME) and the wheel ABI of the
+# vendored deps. We use PYTHON_3_11: the local stack (and the full eval/API
+# suites) runs on 3.11 and the strands-agents→Bedrock tool-serialization path
+# is correct there; on PYTHON_3_13 strands-agents emits toolUse.input as a
+# string instead of a JSON object and ConverseStream rejects it with
+# `ValidationException` (mapped to a generic runtime HTTP 500).
+VENDOR_PYTHON_VERSION = "3.11"
 VENDOR_PLATFORM = "aarch64-manylinux_2_17"
 
 

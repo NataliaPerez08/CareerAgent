@@ -385,26 +385,28 @@ Resume + Job ──> Evaluation
 
 ## v0.8 — AWS AgentCore
 
-**Estado:** `PARTIAL (runtime deployed & READY; remote invoke 500)`
+**Estado:** `DONE (deployed, remote invoke working)`
 
-> El despliegue real se logró gracias a cooperación IAM del admin y a corregir
-> dos causas raíz:
+> El despliegue real se completó y la invocación remota funciona. Tres causas
+> raíz se corrigieron en el camino:
 > 1. **Prefijo de acciones**: AgentCore usa el prefijo IAM `bedrock-agentcore:`
 >    (no `bedrock-agentcore-control:`) — el grant inicial no matcheaba nada.
 > 2. **Arquitectura ARM64 + dependencias vendored**: AgentCore Runtime es solo
 >    aarch64 y **no instala `requirements.txt` en cold start** — las deps deben
->    venderse como wheels arm64 en el zip. El venv local era x86_64, por eso el
->    runtime moría en import (mascarado como "initialization time exceeded").
+>    venderse como wheels arm64 en el zip. El venv local era x86_64.
+> 3. **Python 3.13 breaka la serialización de toolUse en strands-agents**: el
+>    runtime por defecto (PYTHON_3_13) emitía `toolUse.input` como string en vez
+>    de objeto JSON → `ConverseStream ValidationException` (mascarado como 500
+>    genérico "Received error (500) from runtime", sin logs en la capa API hasta
+>    que se habilitó la lectura). Fix: desplegar con **PYTHON_3_11** + wheels
+>    cp311-arm64, la versión donde el stack completo corre y se valida local.
 >
-> Estado actual: runtime `career_agent-FU4ZcW236R` desplegado y **READY** (v3)
-> con nuestro core y empaquetado arm64 vendored; control-plane, rol de
-> ejecución, permisos de invocación y data plane funcionan. Falla restante: la
-> **invocación remota devuelve 500 del runtime**. El mismo código devuelve un
-> `EvaluationResult` correcto localmente (SKIP, 44), por lo que el 500 es
-> ambiente-específico del sandbox; AgentCore no expuso logs de CloudWatch para
-> diagnosticarlo (grupos vacíos/0). No se claima invocación remota funcional en
-> README/video/submission. Detalle en `docs/deploy/agentcore.md` §
-> "Deployment attempt log".
+> Estado actual: runtime `career_agent-FU4ZcW236R` desplegado y **READY** (v4,
+> PYTHON_3_11) con nuestro core y empaquetado arm64 vendored; la **invocación
+> remota funciona** y devuelve el `EvaluationResult` correcto (demo → APPLY,
+> 80) en ~9s; logs de stage y duración visibles en CloudWatch
+> `/aws/bedrock-agentcore/runtimes/<id>-DEFAULT`. Detalle en
+> `docs/deploy/agentcore.md` § "Deployment attempt log".
 
 ### Objetivo
 
@@ -428,9 +430,9 @@ Desplegar el agente usando servicios administrados de AWS.
 
 ### Pendiente (bloqueo del runtime, requiere diagnóstico en la cuenta)
 
-* [x] `make agentcore-deploy` contra la cuenta real — **DONE** (runtime READY v3)
-* [ ] Demo remota funcional (InvokeAgentRuntime) — **falla con 500 del runtime**, sin logs accesibles; mismo código OK local
-* [ ] Verificar traces en CloudWatch Transaction Search — no visible (0 grupos de logs en la cuenta)
+* [x] `make agentcore-deploy` contra la cuenta real — **DONE** (runtime READY v4)
+* [x] Demo remota funcional (InvokeAgentRuntime) — **DONE** (demo → APPLY, 80, ~9s; ver logs en CloudWatch)
+* [x] Verificar traces en CloudWatch Transaction Search — logs de stage y duración visibles en `/aws/bedrock-agentcore/runtimes/<id>-DEFAULT` (invocation completa 8.9s)
 
 ### Restricción
 
@@ -439,8 +441,8 @@ El core debe seguir funcionando localmente.
 ### Definition of Done
 
 * [x] Agent desplegable (paquete + script + docs reproducibles; ejecución pendiente de credenciales)
-* [ ] Demo remota funcional
-* [ ] Tracing visible
+* [x] Demo remota funcional
+* [x] Tracing visible
 * [x] Documentación de deployment reproducible
 
 ---
@@ -537,7 +539,7 @@ Congelar funcionalidad y preparar la entrega. No se agregaron features nuevas.
 
 * [x] Flujo end-to-end estable (verificado: local, Docker, Bedrock real)
 * [x] UI funcional (demo de un clic: Load example → Analyze)
-* [ ] Deployment público — runtime AgentCore desplegado y READY, pero la invocación remota devuelve 500 (limitación documentada en v0.8 y `docs/deploy/agentcore.md`); no se claima endpoint funcional
+* [x] Deployment público — runtime AgentCore desplegado y READY (v4), invocación remota funcional (APPLY, 80, ~9s); documentado en v0.8 y `docs/deploy/agentcore.md`
 * [x] Tests estables (219 passed)
 * [x] Eval report (ejecución final registrada en README con fecha/modelo/config)
 

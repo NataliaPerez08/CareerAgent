@@ -305,10 +305,31 @@ far as the service allows:
    (`--no-vendor` disables it). Verified: all `.so` in the zip are
    `ARM aarch64`; zip is ~29 MB (well under the 250 MB code-deploy limit).
 
-The remaining remote-invoke 500 occurs only inside the AgentCore sandbox:
-the identical code path returns a correct `EvaluationResult` locally
-(e.g. demo → SKIP, score 44). Without accessible runtime logs the sandbox
-error can't be narrowed further from this identity. The conclusion is
-recorded as such — no live invoke is claimed for the demo/video/submission,
-and the core remains fully testable locally (`make test`, `make run`,
-`make agentcore-run`).
+The remaining remote-invoke 500 occurred only inside the AgentCore sandbox
+until its actual cause was isolated:
+
+**Root cause of the 500 → Python 3.13 breaks strands-agents tool
+serialization.** The AgentCore code-deploy runtime defaults to `PYTHON_3_13`.
+Under 3.13 the strands-agents → Bedrock tool path emits `toolUse.input` as a
+`str` instead of a JSON object, so `ConverseStream` rejects it with
+`ValidationException`, which the runtime wrapper surfaces as a generic
+`Received error (500) from runtime` (and validation-path `ValueError` errors
+also map to 500, so the misleading "empty job → 500" signal was a red herring).
+Reproduced locally on a Python 3.13 venv with the same requirements.
+
+**Fix:** deploy with **`PYTHON_3_11`** and cp311-arm64 vendored wheels (the
+Python version where the full stack is developed and validated locally). The
+deploy script sets `RUNTIME = PYTHON_3_11` and `VENDOR_PYTHON_VERSION = 3.11`.
+
+**Verified outcome (2026-09-01, final):**
+
+| Step | Result |
+|---|---|
+| Runtime `career_agent` | ✅ **READY (v4, PYTHON_3_11)** |
+| Remote invoke (`InvokeAgentRuntime`) | ✅ **works** — demo → `APPLY`, score 80, full `EvaluationResult` |
+| Latency | ✅ ~8.9 s (Nova Micro, full 5-tool pipeline) |
+| Observability | ✅ CloudWatch `/aws/bedrock-agentcore/runtimes/career_agent-FU4ZcW236R-DEFAULT` shows `Invocation completed successfully (8.912s)` and stage logs |
+| Control plane / data plane / role / grants | ✅ all working |
+
+The core remains fully testable locally and the remote path is now functional
+and documented.
