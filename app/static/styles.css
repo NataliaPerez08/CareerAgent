@@ -106,6 +106,39 @@ input[type="file"] {
 .file-label { display: block; color: var(--text); }
 .hint { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
 
+.url-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.url-row input[type="url"] {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+}
+.url-row input[type="url"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.load-job {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.load-job:hover { border-color: var(--accent); }
+.load-job:disabled { opacity: 0.55; cursor: wait; }
+#job-source a { color: var(--muted); }
+
 .analyze-row { margin: 22px 0 6px; text-align: center; }
 
 .analyze {

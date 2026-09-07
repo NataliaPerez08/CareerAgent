@@ -1,3 +1,6 @@
+import json
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -81,7 +84,7 @@ def test_openapi_documents_api():
 
 def test_create_evaluation_returns_structured_result(monkeypatch):
     monkeypatch.setattr(
-        "app.main.evaluate_candidate", lambda resume_text, job_description: fake_result()
+        "app.main.evaluate_candidate", lambda resume_text, job_description, timings=None: fake_result()
     )
 
     response = client.post(
@@ -101,7 +104,7 @@ def test_create_evaluation_returns_structured_result(monkeypatch):
 
 def test_create_evaluation_persists_and_is_recoverable(monkeypatch):
     monkeypatch.setattr(
-        "app.main.evaluate_candidate", lambda resume_text, job_description: fake_result()
+        "app.main.evaluate_candidate", lambda resume_text, job_description, timings=None: fake_result()
     )
 
     created = client.post(
@@ -127,7 +130,7 @@ def test_create_evaluation_persists_and_is_recoverable(monkeypatch):
 
 def test_persistence_failure_returns_result_without_id(monkeypatch):
     monkeypatch.setattr(
-        "app.main.evaluate_candidate", lambda resume_text, job_description: fake_result()
+        "app.main.evaluate_candidate", lambda resume_text, job_description, timings=None: fake_result()
     )
 
     def failing_save(*args, **kwargs):
@@ -148,7 +151,7 @@ def test_persistence_failure_returns_result_without_id(monkeypatch):
 
 
 def test_list_evaluations_returns_history(monkeypatch):
-    def fake_evaluate(resume_text, job_description):
+    def fake_evaluate(resume_text, job_description, timings=None):
         return fake_result()
 
     monkeypatch.setattr("app.main.evaluate_candidate", fake_evaluate)
@@ -179,6 +182,33 @@ def test_get_evaluation_unknown_id_returns_404():
     response = client.get("/api/v1/evaluations/999")
     assert response.status_code == 404
     assert response.json()["detail"] == "Evaluation not found."
+
+
+def test_create_evaluation_logs_structured_timings(monkeypatch, caplog):
+    def fake_evaluate(resume_text, job_description, timings=None):
+        assert timings is not None
+        timings.start("profile_extraction")
+        timings.stop("profile_extraction")
+        return fake_result()
+
+    monkeypatch.setattr("app.main.evaluate_candidate", fake_evaluate)
+
+    with caplog.at_level(logging.INFO):
+        response = client.post(
+            "/api/v1/evaluations",
+            json={"resume_text": RESUME_TEXT, "job_description": JOB_DESCRIPTION},
+        )
+
+    assert response.status_code == 200
+    payload = json.loads(
+        next(m for m in caplog.messages if '"event": "api_evaluation_timings"' in m)
+    )
+    assert payload["event"] == "api_evaluation_timings"
+    assert payload["request_total_ms"] >= 0
+    assert payload["persistence_ms"] >= 0
+    assert payload["profile_extraction_ms"] >= 0
+    assert payload["llm_ms"] >= 0
+    assert payload["job_title"] == "Junior backend engineer. Requires Python, REST APIs, PostgreSQL and Docker."
 
 
 def test_create_evaluation_rejects_invalid_payload():
@@ -216,7 +246,7 @@ def test_create_evaluation_rejects_oversized_text():
 
 
 def test_create_evaluation_returns_502_on_model_failure(monkeypatch):
-    def failing_evaluate(resume_text, job_description):
+    def failing_evaluate(resume_text, job_description, timings=None):
         raise RuntimeError("model unavailable")
 
     monkeypatch.setattr("app.main.evaluate_candidate", failing_evaluate)
@@ -233,7 +263,7 @@ def test_create_evaluation_returns_502_on_model_failure(monkeypatch):
 def test_upload_returns_structured_result(monkeypatch):
     seen = {}
 
-    def fake_evaluate(resume_text, job_description):
+    def fake_evaluate(resume_text, job_description, timings=None):
         seen["resume_text"] = resume_text
         seen["job_description"] = job_description
         return fake_result()
@@ -321,7 +351,7 @@ def test_upload_validates_job_description_length():
 
 
 def test_upload_returns_502_on_model_failure(monkeypatch):
-    def failing_evaluate(resume_text, job_description):
+    def failing_evaluate(resume_text, job_description, timings=None):
         raise RuntimeError("model unavailable")
 
     monkeypatch.setattr("app.main.evaluate_candidate", failing_evaluate)

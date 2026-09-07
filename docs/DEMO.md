@@ -68,6 +68,6 @@ python -m app.cli --chat          # agente Strands con el workflow de 5 tools
 
 ## Nota sobre tiempos
 
-Una evaluación completa (4 llamadas a Nova Micro) tarda ~15-40 s según
+Una evaluación completa (3 llamadas a Nova Micro, sin tools) tarda ~15-40 s según
 la región. En la demo, narrar la arquitectura mientras corre el
 spinner.

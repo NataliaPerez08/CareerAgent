@@ -71,14 +71,15 @@ Job    ──> LLM extraction ──> JobRequirements    (Pydantic)
                     ↓
         Gap analysis (severity from code, content from LLM)
                     ↓
-        Grounded explanation (LLM, from the computed result)
+        Plan + explanation (single LLM call, from the computed result)
 ```
 
 The LLM (Amazon Nova Micro) only does what a model should do: extract
-structure from ambiguous text and draft explanation content. The
+structure from ambiguous text and draft plan/explanation content. The
 score, thresholds, severity ranking, and the APPLY/MAYBE/SKIP verdict
 are 100% deterministic Python — the model cannot quietly change the
-business rules.
+business rules. The whole evaluation is **three single-shot model calls
+with no tools attached** — no tool loops, one answer per task.
 
 ## Architecture
 
@@ -89,11 +90,10 @@ flowchart TB
     API --> PIPE["Evaluation pipeline (app.service)"]
     API --> DB[("PostgreSQL (SQLite locally)")]
 
-    subgraph BED ["Strands Agent — Amazon Bedrock, Amazon Nova Micro"]
+    subgraph BED ["Strands Agent — Amazon Bedrock, Amazon Nova Micro (3 single-shot calls, no tools)"]
         PEX["Resume → CandidateProfile (LLM extraction)"]
         REX["Job → JobRequirements (LLM extraction)"]
-        PLAN["Interview topics + preparation (LLM draft)"]
-        EXPL["Explanation (LLM, grounded)"]
+        PLAN["Plan + explanation (LLM draft + reasoning, grounded)"]
     end
 
     subgraph CORE ["Deterministic core — plain Python (agent tools)"]
@@ -107,7 +107,6 @@ flowchart TB
     PEX --> NORM
     REX --> NORM
     NORM --> MATCH --> POLICY --> GAPS --> PLAN
-    POLICY --> EXPL
 ```
 
 The same evaluation core runs behind three runtimes — CLI, FastAPI +
@@ -150,6 +149,10 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
 
 - Resume input as pasted text, TXT, or **PDF** (validated: format,
   size, corrupt and scanned/image-only files rejected explicitly)
+- Job input as pasted text **or loaded from a public URL**
+  (`POST /api/v1/jobs/fetch`): best-effort extraction of title, company
+  and description from page metadata, with graceful fallback to manual
+  paste when a page blocks automated reads
 - Structured `EvaluationResult` contract across CLI, API and UI
 - Skill **normalization**: aliases (`postgres` → `postgresql`,
   `cicd` → `ci/cd`, `cpp` → `c++`, `rest api development` →
@@ -177,11 +180,11 @@ Requirement classification:  100% (25/25)
 Evidence grounding:          100% (25/25)
 Evidence hallucination:        0 fabricated items kept
 
-LLM tier (real Bedrock extraction)
-Skill recall / precision:  97.2% / 97.2%
+LLM tier (real Bedrock extraction, Nova Micro, 2026-09-07)
+Skill recall / precision:  100% / 100%
 Years extraction:          100% (25/25)
-Requirement classification:  84% (21/25)
-Recommendation correctness:  92% (23/25)
+Requirement classification:  96% (24/25)
+Recommendation correctness: 100% (25/25)
 Evidence hallucination:       0%  ← critical target, met in every run
 Tool invocation:            100% (3/3 agent loops, all 5 tools)
 ```
@@ -205,7 +208,14 @@ Only metrics actually executed are reported (`dist/evals/report.md`,
 timestamped). Across repeated executions at temperature 0.2 we observe
 run-to-run variance: recommendation correctness 84–92%, requirement
 classification 68–88%, while **fabricated evidence remained 0 in every
-execution**.
+execution**. With the three-call tool-less pipeline (Día 2) the last
+execution measured 100% recall/precision, 96% classification and 100%
+recommendations — still the residual failure mode is ambiguous
+requirements (see Limitations).
+
+A model comparison (Nova Micro vs Nova Lite — latency, quality, cost)
+with the measured data and the decision to keep Micro lives in
+[`docs/MODEL_BENCHMARK.md`](docs/MODEL_BENCHMARK.md).
 
 ## Quick start
 
@@ -324,9 +334,53 @@ and history.
 ## Tests
 
 ```bash
-make test      # 219 tests, no LLM calls (models mocked where relevant)
+make test      # 255 tests, no LLM calls (models mocked where relevant)
 make lint      # ruff
 ```
+
+## Latency & benchmarking
+
+Every evaluation records a structured, per-stage latency breakdown
+(one JSON log line) through `app/timing.py`, together with counters
+that pin the agent-loop cost (`llm_calls`, `llm_cycles`, `tool_calls`,
+`input_tokens`, `output_tokens`):
+
+```json
+{"event": "api_evaluation_timings", "request_total_ms": 34200,
+ "resume_parse_ms": 120, "profile_extraction_ms": 8120,
+ "requirements_extraction_ms": 4100, "deterministic_matching_ms": 85,
+ "recommendation_ms": 1, "plan_and_explanation_ms": 15500,
+ "persistence_ms": 18, "llm_ms": 27720, "tools_ms": 85,
+ "llm_calls": 3, "llm_cycles": 3, "tool_calls": 0,
+ "input_tokens": 4250, "output_tokens": 1180}
+```
+
+One evaluation costs exactly three model calls — single-shot
+structured extractions for candidate profile, job requirements and the
+final plan — all with no tools attached. Deterministic matching
+(skill normalization, set comparison, policy thresholds, strengths and
+gaps) happens in Python between the extraction and the final plan, so
+the model never calculates and never loops on tool calls.
+
+Stage names are shared across the API (`api_evaluation_timings`),
+the AgentCore runtime (`agentcore_evaluation_timings`) and the
+benchmark tool. Only durations and tiny metadata are logged — never
+resume/job content or prompts.
+
+A reproducible latency baseline can be produced with:
+
+```bash
+make benchmark        # 5 real Bedrock runs (needs AWS credentials)
+python scripts/benchmark.py --count 20   # more runs for tighter percentiles
+make benchmark-mock   # no LLM: deterministic pipeline floor, safe for CI
+```
+
+The report (`dist/benchmark/report.md`) and machine-readable
+`dist/benchmark/baseline.json` hold p50/p95/mean/min/max per stage,
+plus the model, region and input files used. `--compare` prints the
+delta against the previous baseline. Run-to-run measurements of
+pipeline stages are recorded per evaluation in the JSON logs for
+before/after comparisons of any optimization.
 
 ## Security / privacy
 
@@ -348,6 +402,11 @@ Honest ones:
 
 - **LLM run-to-run variance** at temperature 0.2 — recommendation
   correctness ranged 84–92% across our executions.
+- **Job URL loading is best-effort**: dynamic/JavaScript-rendered pages,
+  login walls and anti-bot systems often yield no usable description —
+  the UI then falls back to manual paste. Timeout, payload cap and an
+  SSRF guard (no private/loopback/link-local targets) keep fetching
+  polite and safe; no anti-bot bypass is attempted.
 - **Nova Micro struggles with ambiguous requirements**: prose mentions
   ("you will work with Kubernetes") are sometimes classified as
   required instead of unknown, and items are occasionally dropped from

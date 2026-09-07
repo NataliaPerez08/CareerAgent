@@ -127,9 +127,10 @@ print(json.loads(b"".join(response["response"]).decode()))
 - Every invocation is logged by the runtime with a `requestId`; errors
   include error type, message and stack trace.
 - Pipeline stage timings (`profile_extraction`, `requirements_extraction`,
-  `deterministic_matching`, `career_plan`, `explanation`) are logged by
-  `app.service` and land in the runtime's CloudWatch log group:
-  `/aws/bedrock-agentcore/runtimes/<agent-id>-DEFAULT`.
+  `deterministic_matching`, `recommendation`, `plan_and_explanation`) plus
+  agent-loop counters (`llm_calls`, `llm_cycles`, `tool_calls`, tokens)
+  are logged by `app.service` and land in the runtime's CloudWatch log
+  group: `/aws/bedrock-agentcore/runtimes/<agent-id>-DEFAULT`.
 - Enable **CloudWatch Transaction Search** for traces
   ([AgentCore observability](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability.html)),
   or use `agentcore logs` / `agentcore traces list` from the CLI.

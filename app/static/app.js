@@ -1,5 +1,6 @@
 const API_TEXT = "/api/v1/evaluations";
 const API_UPLOAD = "/api/v1/evaluations/upload";
+const API_JOB_FETCH = "/api/v1/jobs/fetch";
 const MIN_LENGTH = 20;
 
 const EXAMPLE_RESUME = `Junior Backend Developer
@@ -46,6 +47,9 @@ const resumeText = el("resume-text");
 const resumeFile = el("resume-file");
 const fileName = el("file-name");
 const jobDescription = el("job-description");
+const jobUrl = el("job-url");
+const loadJobBtn = el("load-job");
+const jobSource = el("job-source");
 const analyzeBtn = el("analyze");
 const statusBox = el("status");
 const statusText = el("status-text");
@@ -78,6 +82,52 @@ el("load-example").addEventListener("click", () => {
   switchTab(false);
   resumeText.value = EXAMPLE_RESUME;
   jobDescription.value = EXAMPLE_JOB;
+});
+
+loadJobBtn.addEventListener("click", async () => {
+  const url = jobUrl.value.trim();
+  if (!/^https?:\/\/.+/.test(url)) {
+    showError("Enter a full job URL, e.g. https://company.com/jobs/123 (http or https).");
+    return;
+  }
+
+  loadJobBtn.disabled = true;
+  errorBox.hidden = true;
+  result.hidden = true;
+  jobSource.hidden = true;
+  jobSource.textContent = "Loading job…";
+  jobSource.hidden = false;
+  let loaded = false;
+
+  try {
+    const response = await fetch(API_JOB_FETCH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      showError(formatApiError(data, response.status));
+      return;
+    }
+
+    loaded = true;
+    const parts = [data.title, data.company].filter(Boolean);
+    jobDescription.value = [...parts, data.description].filter(Boolean).join("\n\n");
+
+    jobSource.textContent = "";
+    const link = document.createElement("a");
+    link.href = data.source_url || url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = `Loaded: ${data.title || "Untitled job"}${data.company ? " · " + data.company : ""}`;
+    jobSource.appendChild(link);
+  } catch {
+    showError("Could not reach the CareerAgent server. Is it still running?");
+  } finally {
+    jobSource.hidden = !loaded;
+    loadJobBtn.disabled = false;
+  }
 });
 
 function showError(message) {

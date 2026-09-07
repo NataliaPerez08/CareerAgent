@@ -58,10 +58,17 @@ class GapPreparation(BaseModel):
 
 
 class CareerPlan(BaseModel):
-    """LLM-drafted career intelligence content, validated by code before use."""
+    """LLM-drafted career intelligence content, validated by code before use.
+
+    Produced by a single model call that also drafts ``reasoning``; the
+    explanation is cleaned and kept only if it is grounded in the
+    deterministic result, and the gap content is filtered against the
+    skills that are actually missing.
+    """
 
     interview_topics: list[str] = Field(default_factory=list)
     gap_preparation: list[GapPreparation] = Field(default_factory=list)
+    reasoning: str = ""
 
 
 class EvaluationResult(BaseModel):

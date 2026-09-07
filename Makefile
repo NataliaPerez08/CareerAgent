@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy agentcore-role eval eval-llm
+.PHONY: install dev test lint format run cli costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy agentcore-role eval eval-llm benchmark benchmark-mock
 
 install:
 	python -m pip install -e .
@@ -32,6 +32,12 @@ eval:
 
 eval-llm:
 	python scripts/run_evals.py --tier llm
+
+benchmark:
+	python scripts/benchmark.py
+
+benchmark-mock:
+	python scripts/benchmark.py --mock --count 10
 
 docker-build:
 	docker build -t career-agent:dev .

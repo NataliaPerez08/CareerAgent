@@ -41,8 +41,14 @@
         <div class="card-head">
           <h2>2 · Job description</h2>
         </div>
+        <div class="url-row">
+          <input type="url" id="job-url" spellcheck="false"
+            placeholder="…or load it from a URL, e.g. https://company.com/jobs/…">
+          <button type="button" id="load-job" class="load-job">Load job</button>
+        </div>
+        <p class="hint" id="job-source" hidden></p>
         <textarea id="job-description" rows="15"
-          placeholder="Paste the job posting here… (at least 20 characters)"></textarea>
+          placeholder="Paste the job posting here… or load it from the URL above (at least 20 characters)"></textarea>
       </div>
     </section>
 

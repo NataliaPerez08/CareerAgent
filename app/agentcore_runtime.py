@@ -31,6 +31,7 @@ from bedrock_agentcore import BedrockAgentCoreApp
 
 from app.resume_parser import max_resume_size_bytes, parse_resume
 from app.service import evaluate_candidate
+from app.timing import EvaluationTimings
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,10 @@ def _validated_text(value: object, field: str) -> str:
     return value
 
 
-def _resume_text_from_payload(payload: dict) -> str:
+def _resume_text_from_payload(
+    payload: dict,
+    timings: EvaluationTimings | None = None,
+) -> str:
     resume_text = payload.get("resume_text")
     resume_b64 = payload.get("resume_b64")
 
@@ -67,7 +71,12 @@ def _resume_text_from_payload(payload: dict) -> str:
             raise ValueError("resume_b64 is not valid base64.") from exc
         if len(data) > max_resume_size_bytes():
             raise ValueError("Resume file exceeds the maximum allowed size.")
-        return parse_resume(data, filename)
+        timings = timings or EvaluationTimings()
+        timings.start("resume_parse")
+        try:
+            return parse_resume(data, filename)
+        finally:
+            timings.stop_if_started("resume_parse")
 
     return _validated_text(resume_text, "resume_text")
 
@@ -78,19 +87,27 @@ def evaluate(payload: dict) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Payload must be a JSON object.")  # noqa: TRY004 - malformed input, not a type bug
 
+    timings = EvaluationTimings()
+    timings.start("request_total")
     job_description = _validated_text(payload.get("job_description"), "job_description")
-    resume_text = _resume_text_from_payload(payload)
+    resume_text = _resume_text_from_payload(payload, timings=timings)
 
     logger.info(
         "AgentCore invocation (resume: %d chars, job: %d chars)",
         len(resume_text),
         len(job_description),
     )
-    result = evaluate_candidate(resume_text, job_description)
+    result = evaluate_candidate(resume_text, job_description, timings=timings)
     logger.info(
         "AgentCore invocation complete (recommendation=%s, score=%d)",
         result.recommendation,
         result.score,
+    )
+    timings.stop("request_total")
+    timings.log(
+        event="agentcore_evaluation_timings",
+        recommendation=result.recommendation,
+        score=result.score,
     )
     return result.model_dump()
 

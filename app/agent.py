@@ -77,6 +77,46 @@ When the job description explicitly marks requirements as
 mandatory, give them extra importance in your recommendation.
 """
 
+PIPELINE_SYSTEM_PROMPT = """
+You are the interpretation layer of CareerAgent, called one step at a
+time by a deterministic Python pipeline.
+
+The pipeline already computes every score, match, gap severity and
+recommendation in code. You only read documents, extract what they
+state, and draft content grounded in what you were given.
+
+Rules you must always follow:
+
+Never invent candidate experience. Only mention skills or
+experience that appear in the resume.
+
+Never infer that a requirement is optional, preferred,
+mandatory or non-mandatory unless the job description
+explicitly provides that information.
+
+Use evidence from the resume. If the resume provides no
+evidence for a skill, treat it as unknown instead of guessing.
+
+Never estimate match percentages, gap severity, or
+recommendations yourself: the pipeline computed them.
+
+When a deterministic evaluation result is provided to you, ground
+your explanation in it. Never contradict or recompute it.
+
+When you list skills, use short canonical names (for example
+"rest api" or "postgresql"), not long phrases copied verbatim
+from the documents.
+
+A skill that the job description explicitly marks as preferred
+should not disqualify the candidate when missing.
+
+When the job description explicitly marks requirements as
+mandatory, give them extra importance in your explanation.
+
+Answer exactly what the step asks for, in the requested structure.
+You have no tools: every deterministic calculation is already done.
+"""
+
 AGENT_WORKFLOW_PROMPT = """Evaluate this candidate against this job.
 
 Follow your workflow in order: analyze_job, normalize_skills,
@@ -96,7 +136,7 @@ JOB DESCRIPTION
 {job}"""
 
 
-def build_agent() -> Agent:
+def _build_model() -> BedrockModel:
     model_id = os.getenv(
         "BEDROCK_MODEL_ID",
         "amazon.nova-micro-v1:0",
@@ -113,13 +153,17 @@ def build_agent() -> Agent:
         logger.warning("Invalid BEDROCK_TEMPERATURE value, falling back to 0.2")
         temperature = 0.2
 
-    model = BedrockModel(
+    return BedrockModel(
         model_id=model_id,
         region_name=region,
         temperature=temperature,
     )
+
+
+def build_agent() -> Agent:
+    """Tool-enabled agent: the demonstrable Strands workflow (CLI --chat, evals)."""
     return Agent(
-        model=model,
+        model=_build_model(),
         system_prompt=SYSTEM_PROMPT,
         tools=[
             analyze_job,
@@ -128,6 +172,23 @@ def build_agent() -> Agent:
             identify_skill_gaps,
             generate_interview_plan,
         ],
+        callback_handler=None,
+    )
+
+
+def build_pipeline_agent() -> Agent:
+    """Single-shot agent for the structured pipeline's LLM steps.
+
+    The pipeline runs every deterministic calculation in Python
+    (normalization, matching, policy, gaps), so these steps need no tools.
+    Attaching tools would only invite extra event-loop cycles
+    (LLM -> tool -> LLM) on calls whose answer is a single structured
+    object. Tool usage stays demonstrable through ``build_agent()``.
+    """
+    return Agent(
+        model=_build_model(),
+        system_prompt=PIPELINE_SYSTEM_PROMPT,
+        tools=[],
         callback_handler=None,
     )
 

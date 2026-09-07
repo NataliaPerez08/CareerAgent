@@ -660,3 +660,18 @@ v0.8  █████░░░░░  BLOCKED (deployment)
 v0.9  ██████████  DONE
 v1.0  ██████████  DONE (video/submission/publicación: acción humana)
 ```
+
+---
+
+# Sprint 11 días (post-v1.0)
+
+Optimizaciones medibles sobre el producto ya lanzado. Cada día cierra
+con medición antes/después. Detalles en
+[`CAREERAGENT_11_DAY_SPRINT_AGENT.md`](../CAREERAGENT_11_DAY_SPRINT_AGENT.md).
+
+```text
+Día 1  Instrumentación de latencia      DONE (243 tests)
+Día 2  3 calls, 0 tools, counters       DONE (254 tests; real: 4.49 s p50)
+Día 3  Benchmark de modelos             DONE (Micro > Lite; docs/MODEL_BENCHMARK.md)
+Día 4  Ingestión de vacante por URL     DONE (273 tests; POST /api/v1/jobs/fetch + UI)
+```

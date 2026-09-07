@@ -1,4 +1,6 @@
 import base64
+import json
+import logging
 
 import pytest
 from fastapi.testclient import TestClient
@@ -38,7 +40,7 @@ def fake_result() -> EvaluationResult:
 def mock_evaluate(monkeypatch):
     seen = {}
 
-    def fake_evaluate(resume_text, job_description):
+    def fake_evaluate(resume_text, job_description, timings=None):
         seen["resume_text"] = resume_text
         seen["job_description"] = job_description
         return fake_result()
@@ -134,6 +136,58 @@ def test_evaluate_rejects_scanned_pdf(mock_evaluate):
                 "job_description": JOB_DESCRIPTION,
             }
         )
+
+
+def test_evaluate_logs_structured_timings(monkeypatch, caplog):
+    def fake_evaluate(resume_text, job_description, timings=None):
+        assert timings is not None
+        timings.start("profile_extraction")
+        timings.stop("profile_extraction")
+        return fake_result()
+
+    monkeypatch.setattr("app.agentcore_runtime.evaluate_candidate", fake_evaluate)
+
+    with caplog.at_level(logging.INFO):
+        evaluate({"resume_text": RESUME_TEXT, "job_description": JOB_DESCRIPTION})
+
+    events = [
+        json.loads(record.getMessage())
+        for record in caplog.records
+        if '"event": "agentcore_evaluation_timings"' in record.getMessage()
+    ]
+    assert len(events) == 1
+    assert events[0]["request_total_ms"] >= 0
+    assert events[0]["profile_extraction_ms"] >= 0
+    assert events[0]["llm_ms"] >= 0
+    assert events[0]["recommendation"] == "APPLY"
+
+
+def test_evaluate_base64_records_resume_parse_timing(monkeypatch, caplog):
+    seen = {}
+
+    def fake_evaluate(resume_text, job_description, timings=None):
+        seen["resume_text"] = resume_text
+        return fake_result()
+
+    monkeypatch.setattr("app.agentcore_runtime.evaluate_candidate", fake_evaluate)
+
+    with caplog.at_level(logging.INFO):
+        evaluate(
+            {
+                "resume_b64": base64.b64encode(RESUME_PDF).decode(),
+                "resume_filename": "cv.pdf",
+                "job_description": JOB_DESCRIPTION,
+            }
+        )
+
+    events = [
+        json.loads(record.getMessage())
+        for record in caplog.records
+        if '"event": "agentcore_evaluation_timings"' in record.getMessage()
+    ]
+    assert len(events) == 1
+    assert events[0]["resume_parse_ms"] >= 0
+    assert events[0]["request_total_ms"] >= 0
 
 
 def test_ping_endpoint():

@@ -26,10 +26,12 @@ mantiene: el LLM interpreta, el código decide.
   (`build_skill_gaps`: critical > required > preferred; un skill
   crítico faltante se reporta una sola vez con la severidad mayor).
 - `interview_topics` y `preparation_steps`: contenido de dominio → el
-  LLM los redacta (paso `generate_career_plan`, salida Pydantic
-  `CareerPlan`), pero el código valida: solo se aceptan steps para
-  skills que son gaps reales (`attach_preparation_steps`), dedupe
-  case-insensitive, límites de tamaño (10 temas, 8 steps por skill).
+  LLM los redacta (paso `draft_career_plan`, salida Pydantic
+  `CareerPlan`; el reasoning/plan y la explicación final se fusionan en
+  una sola llamada — ver ADR-0004), pero el código valida: solo se
+  aceptan steps para skills que son gaps reales
+  (`attach_preparation_steps`), dedupe case-insensitive, límites de
+  tamaño (10 temas, 8 steps por skill).
 - `preparation_plan`: aplanado determinista de los gaps ya validados,
   ordenado por severidad.
 

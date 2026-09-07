@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app import job_ingestion
 from app.db import get_session, run_migrations
 from app.repository import (
     get_evaluation,
@@ -39,6 +40,7 @@ from app.resume_parser import (
 )
 from app.schemas import EvaluationResult
 from app.service import evaluate_candidate
+from app.timing import EvaluationTimings
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +88,21 @@ class EvaluationSummary(BaseModel):
     recommendation: str
 
 
+class JobFetchRequest(BaseModel):
+    """Load a job posting from its URL instead of pasting text."""
+
+    url: str = Field(min_length=8, max_length=2048)
+
+
+class JobFetchResponse(BaseModel):
+    """Structured content extracted from a job posting URL."""
+
+    title: str = ""
+    company: str = ""
+    description: str
+    source_url: str
+
+
 RESUME_FILE = File(...)
 JOB_DESCRIPTION_FORM = Form(min_length=20)
 LIST_LIMIT = Query(default=20, ge=1, le=100)
@@ -106,9 +123,12 @@ def _persist(
     job_description: str,
     result: EvaluationResult,
     filename: str | None = None,
+    timings: EvaluationTimings | None = None,
 ) -> EvaluationResponse:
     """Best-effort persistence: log and degrade on storage failure."""
+    timings = timings or EvaluationTimings()
     try:
+        timings.start("persistence")
         saved = save_evaluation(
             session,
             resume_text=resume_text,
@@ -116,7 +136,9 @@ def _persist(
             result=result,
             filename=filename,
         )
+        timings.stop("persistence")
     except Exception:
+        timings.stop_if_started("persistence")
         logger.exception("Failed to persist evaluation")
         session.rollback()
         return EvaluationResponse(**result.model_dump())
@@ -142,6 +164,39 @@ def health() -> dict[str, str]:
 
 
 @app.post(
+    f"{API_V1}/jobs/fetch",
+    response_model=JobFetchResponse,
+    tags=["jobs"],
+    summary="Load a job posting from a URL",
+)
+def fetch_job_posting(request: JobFetchRequest) -> JobFetchResponse:
+    """Fetch a job URL and return title, company and description.
+
+    Best-effort extraction from public pages. On any failure a specific
+    error is returned so the UI can fall back to manual paste.
+    """
+    try:
+        posting = job_ingestion.fetch_job(request.url)
+    except job_ingestion.JobUrlError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except job_ingestion.JobEmptyError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except job_ingestion.JobFetchTimeoutError as exc:
+        raise HTTPException(status_code=504, detail=str(exc)) from exc
+    except job_ingestion.JobFetchStatusError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except job_ingestion.JobFetchError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return JobFetchResponse(
+        title=posting.title,
+        company=posting.company,
+        description=posting.description,
+        source_url=posting.source_url,
+    )
+
+
+@app.post(
     f"{API_V1}/evaluations",
     response_model=EvaluationResponse,
     tags=["evaluations"],
@@ -157,13 +212,23 @@ def create_evaluation(
         len(request.resume_text),
         len(request.job_description),
     )
-    result = evaluate_candidate(request.resume_text, request.job_description)
-    return _persist(
+    timings = EvaluationTimings()
+    timings.start("request_total")
+    result = evaluate_candidate(
+        request.resume_text,
+        request.job_description,
+        timings=timings,
+    )
+    response = _persist(
         session,
         resume_text=request.resume_text,
         job_description=request.job_description,
         result=result,
+        timings=timings,
     )
+    timings.stop("request_total")
+    timings.log(event="api_evaluation_timings", job_title=response.job_title)
+    return response
 
 
 @app.post(
@@ -188,6 +253,9 @@ async def create_evaluation_upload(
         ) from exc
 
     filename = resume.filename or "resume"
+    timings = EvaluationTimings()
+    timings.start("request_total")
+    timings.start("resume_parse")
     try:
         resume_text = parse_resume(data, filename)
     except ResumeTooLargeError as exc:
@@ -196,15 +264,21 @@ async def create_evaluation_upload(
         raise HTTPException(status_code=415, detail=str(exc)) from exc
     except ResumeParseError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    finally:
+        timings.stop_if_started("resume_parse")
 
-    result = evaluate_candidate(resume_text, job_description)
-    return _persist(
+    result = evaluate_candidate(resume_text, job_description, timings=timings)
+    response = _persist(
         session,
         resume_text=resume_text,
         job_description=job_description,
         result=result,
         filename=filename,
+        timings=timings,
     )
+    timings.stop("request_total")
+    timings.log(event="api_evaluation_timings", job_title=response.job_title)
+    return response
 
 
 @app.get(
