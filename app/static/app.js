@@ -96,21 +96,11 @@ el("load-example").addEventListener("click", () => {
   jobDescription.value = EXAMPLE_JOB;
 });
 
-loadJobBtn.addEventListener("click", async () => {
-  const url = jobUrl.value.trim();
-  if (!/^https?:\/\/.+/.test(url)) {
-    showError("Enter a full job URL, e.g. https://company.com/jobs/123 (http or https).");
-    return;
-  }
-
-  loadJobBtn.disabled = true;
-  errorBox.hidden = true;
-  result.hidden = true;
+async function loadJobFromUrl(url) {
   jobSource.hidden = true;
   jobSource.textContent = "Loading job…";
   jobSource.hidden = false;
-  let loaded = false;
-
+  let ok = false;
   try {
     const response = await fetch(API_JOB_FETCH, {
       method: "POST",
@@ -120,10 +110,10 @@ loadJobBtn.addEventListener("click", async () => {
     const data = await response.json().catch(() => null);
     if (!response.ok) {
       showError(formatApiError(data, response.status));
-      return;
+      return false;
     }
 
-    loaded = true;
+    ok = true;
     const parts = [data.title, data.company].filter(Boolean);
     jobDescription.value = [...parts, data.description].filter(Boolean).join("\n\n");
 
@@ -136,8 +126,26 @@ loadJobBtn.addEventListener("click", async () => {
     jobSource.appendChild(link);
   } catch {
     showError("Could not reach the CareerAgent server. Is it still running?");
+    return false;
   } finally {
-    jobSource.hidden = !loaded;
+    jobSource.hidden = !(ok && jobDescription.value);
+    return ok && jobDescription.value.length > 0;
+  }
+}
+
+loadJobBtn.addEventListener("click", async () => {
+  const url = jobUrl.value.trim();
+  if (!/^https?:\/\/.+/.test(url)) {
+    showError("Enter a full job URL, e.g. https://company.com/jobs/123 (http or https).");
+    return;
+  }
+
+  loadJobBtn.disabled = true;
+  errorBox.hidden = true;
+  result.hidden = true;
+  try {
+    await loadJobFromUrl(url);
+  } finally {
     loadJobBtn.disabled = false;
   }
 });
@@ -549,3 +557,102 @@ analyzeBtn.addEventListener("click", async () => {
 });
 
 loadHistory();
+
+const API_BATCH_RANK = "/api/v1/batch/quick-ranking";
+const jobUrlsMulti = el("job-urls-multi");
+const rankJobsBtn = el("rank-jobs");
+const batchResult = el("batch-result");
+const batchNote = el("batch-note");
+const batchError = el("batch-error");
+
+function batchRow(item, index) {
+  const li = document.createElement("li");
+  li.className = "batch-row";
+
+  const verdict = document.createElement("span");
+  verdict.className = `badge ${item.recommendation.toLowerCase()}`;
+  verdict.textContent = item.recommendation;
+
+  const title = document.createElement("div");
+  title.className = "batch-title";
+  title.textContent = `${index}. ${item.title || "Untitled job"}`;
+  if (item.company) title.textContent += ` · ${item.company}`;
+
+  const meta = document.createElement("span");
+  meta.className = "batch-meta";
+  if (item.error) {
+    meta.textContent = `Error: ${item.error}`;
+  } else {
+    const total = (item.matched_skills || []).length + (item.missing_skills || []).length;
+    meta.textContent = total
+      ? `${(item.matched_skills || []).length} of ${total} of your skills are mentioned`
+      : "No skills to compare";
+  }
+
+  const score = document.createElement("span");
+  score.className = "batch-score";
+  score.textContent = item.error ? "—" : `${item.score}%`;
+
+  li.append(verdict, title, meta, score);
+
+  if (!item.error) {
+    li.classList.add("clickable");
+    li.title = "Analyze this job in depth";
+    li.addEventListener("click", async () => {
+      jobUrl.value = item.url;
+      result.hidden = true;
+      jobDescription.value = "";
+      const loaded = await loadJobFromUrl(item.url);
+      if (loaded) analyzeBtn.click();
+    });
+  }
+  return li;
+}
+
+rankJobsBtn.addEventListener("click", async () => {
+  const urls = jobUrlsMulti.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 10);
+  batchError.hidden = true;
+
+  if (uploadMode) {
+    batchError.textContent = "Switch to the 'Paste text' resume tab to use batch ranking.";
+    batchError.hidden = false;
+    return;
+  }
+  if (urls.length === 0) {
+    batchError.textContent = "Paste at least one job URL (one per line).";
+    batchError.hidden = false;
+    return;
+  }
+
+  rankJobsBtn.disabled = true;
+  batchResult.hidden = true;
+  batchNote.hidden = false;
+  batchNote.textContent = "Ranking… one quick model call, a few seconds.";
+  try {
+    const response = await fetch(API_BATCH_RANK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume_text: resumeText.value, job_urls: urls }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      showError(formatApiError(data, response.status));
+      batchNote.hidden = true;
+      return;
+    }
+    batchNote.textContent = data.note || "";
+    batchResult.hidden = false;
+    batchResult.innerHTML = "";
+    data.jobs.forEach((item, index) => batchResult.appendChild(batchRow(item, index + 1)));
+  } catch {
+    batchNote.hidden = true;
+    batchError.textContent = "Could not reach the CareerAgent server. Is it still running?";
+    batchError.hidden = false;
+  } finally {
+    rankJobsBtn.disabled = false;
+  }
+});

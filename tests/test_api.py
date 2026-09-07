@@ -83,6 +83,8 @@ def test_openapi_documents_api():
     assert "/api/v1/evaluations/{evaluation_id}" in paths
     assert "/api/v1/evaluations/stream" in paths
     assert "/api/v1/evaluations/upload/stream" in paths
+    assert "/api/v1/batch/quick-ranking" in paths
+    assert "/api/v1/jobs/fetch" in paths
 
 
 def _parse_sse(text: str):
@@ -486,3 +488,89 @@ def test_upload_returns_502_on_model_failure(monkeypatch):
 
     assert response.status_code == 502
     assert response.json()["detail"] == "Agent execution failed."
+
+
+def _fake_profile(*skills):
+    from app.schemas import CandidateProfile
+
+    return CandidateProfile(skills=list(skills), years_of_experience=2, evidence=[])
+
+
+def _fake_fetch(postings_by_url):
+    from app import job_ingestion
+
+    def fake_fetch(url):
+        posting = postings_by_url.get(url)
+        if posting is not None:
+            return job_ingestion.JobPosting(
+                title=posting[0], company="Corp", description=posting[1], source_url=url
+            )
+        raise job_ingestion.JobFetchStatusError(f"blocked: {url}")
+
+    return fake_fetch
+
+
+def test_quick_ranking_sorted_and_deterministic(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.extract_candidate_profile",
+        lambda resume: _fake_profile("python", "postgresql", "docker"),
+    )
+    monkeypatch.setattr(
+        "app.job_ingestion.fetch_job",
+        _fake_fetch(
+            {
+                "https://a.example/python": ("Python job", "Need python and docker."),
+                "https://a.example/full": ("Full stack", "python postgresql docker all three"),
+            }
+        ),
+    )
+
+    response = client.post(
+        "/api/v1/batch/quick-ranking",
+        json={
+            "resume_text": RESUME_TEXT,
+            "job_urls": ["https://a.example/python", "https://a.example/full"],
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["candidate_skills"] == ["docker", "postgresql", "python"]
+    assert [job["url"] for job in body["jobs"]] == [
+        "https://a.example/full",
+        "https://a.example/python",
+    ]
+    assert body["jobs"][0]["score"] == 100
+    assert body["jobs"][0]["recommendation"] == "APPLY"
+    assert body["jobs"][1]["score"] == 67
+
+
+def test_quick_ranking_turns_failed_url_into_error_row(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.extract_candidate_profile",
+        lambda resume: _fake_profile("python"),
+    )
+    monkeypatch.setattr(
+        "app.job_ingestion.fetch_job",
+        _fake_fetch({"https://a.example/ok": ("OK", "Need python.")}),
+    )
+
+    response = client.post(
+        "/api/v1/batch/quick-ranking",
+        json={
+            "resume_text": RESUME_TEXT,
+            "job_urls": ["https://a.example/ok", "https://a.example/broken"],
+        },
+    )
+    assert response.status_code == 200, response.text
+    jobs = response.json()["jobs"]
+    assert len(jobs) == 2
+    assert jobs[0]["error"] is None
+    assert jobs[1]["error"] == "blocked: https://a.example/broken"
+
+
+def test_quick_ranking_validates_payload():
+    response = client.post(
+        "/api/v1/batch/quick-ranking",
+        json={"resume_text": "short", "job_urls": []},
+    )
+    assert response.status_code == 422

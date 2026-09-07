@@ -161,6 +161,10 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
 - **Recent evaluations**: the UI lists past runs (title, score,
   recommendation, age) from the existing persistence layer and reopens
   any stored evaluation with one click — no auth added
+- **Batch ranking** (`POST /api/v1/batch/quick-ranking`): paste up to 10
+  job URLs and get a cheap, deterministic ranking against your resume
+  (one model call for the profile, no per-job LLM analysis). Click a row
+  in the UI to run the full deep analysis on that job
 - Structured `EvaluationResult` contract across CLI, API and UI
 - Skill **normalization**: aliases (`postgres` → `postgresql`,
   `cicd` → `ci/cd`, `cpp` → `c++`, `rest api development` →

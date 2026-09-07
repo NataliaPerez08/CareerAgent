@@ -389,3 +389,26 @@ input[type="file"] {
 .topics:empty::after, .plan:empty::after { content: "—"; color: var(--muted); }
 
 .reasoning { margin: 0; color: var(--text); line-height: 1.7; }
+
+.batch-result { margin: 12px 0 0; padding: 0; list-style: none; }
+.batch-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.batch-row.clickable { cursor: pointer; transition: border-color 0.15s ease; }
+.batch-row.clickable:hover { border-color: var(--accent); }
+.batch-title { font-weight: 600; }
+.batch-meta { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.batch-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent);
+  justify-self: end;
+}

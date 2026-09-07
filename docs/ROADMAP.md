@@ -678,4 +678,6 @@ Día 5  UX del flujo                     DONE (279 tests; SSE progress stages + 
 Día 6  Historial                         DONE (recent evaluations UI; click opens stored result)
 Día 7  AgentCore session/warm-path       DONE (--warm-path probe: no significant warm-up
                                              → session reuse STOPPED; docs/MODEL_BENCHMARK.md)
+Día 8  Batch ranking MVP                 DONE (POST /api/v1/batch/quick-ranking: deterministic
+                                             rank of up to 10 job URLs, clickable rows → deep analysis)
 ```

@@ -50,6 +50,23 @@
         <textarea id="job-description" rows="15"
           placeholder="Paste the job posting here… or load it from the URL above (at least 20 characters)"></textarea>
       </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Optional · Batch ranking</h2>
+        </div>
+        <p class="hint">
+          Compare several job URLs against your resume at once, then click one for the full analysis.
+        </p>
+        <textarea id="job-urls-multi" rows="3" spellcheck="false"
+          placeholder="One job URL per line, up to 10:&#10;https://company.com/jobs/123&#10;https://startup.io/careers/456"></textarea>
+        <div class="url-row">
+          <button type="button" id="rank-jobs" class="load-job">Rank jobs</button>
+        </div>
+        <p class="hint" id="batch-note" hidden></p>
+        <ul id="batch-result" class="batch-result" hidden></ul>
+        <p class="hint" id="batch-error" hidden></p>
+      </div>
     </section>
 
     <div class="analyze-row">
