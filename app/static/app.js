@@ -1,6 +1,7 @@
 const API_TEXT_STREAM = "/api/v1/evaluations/stream";
 const API_UPLOAD_STREAM = "/api/v1/evaluations/upload/stream";
 const API_JOB_FETCH = "/api/v1/jobs/fetch";
+const API_EVALUATIONS = "/api/v1/evaluations";
 const MIN_LENGTH = 20;
 
 // Canonical stage name -> label shown in the progress list (order matters).
@@ -437,6 +438,71 @@ function renderResult(data) {
   result.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function historyRow(item) {
+  const row = document.createElement("li");
+  row.className = "history-row";
+  const main = document.createElement("div");
+  main.className = "history-main";
+  const title = document.createElement("span");
+  title.className = "history-title";
+  title.textContent = item.job_title || `Evaluation #${item.id}`;
+  const when = document.createElement("span");
+  when.className = "history-when";
+  when.textContent = item.created_at ? timeAgo(item.created_at) : "";
+  main.append(title, when);
+  const score = document.createElement("span");
+  score.className = "history-score";
+  score.textContent = `${item.score}%`;
+  score.style.color = scoreColor(item.score);
+  const badge = document.createElement("span");
+  badge.className = `badge ${item.recommendation}`;
+  badge.textContent = item.recommendation;
+  row.append(main, score, badge);
+  row.addEventListener("click", () => openHistory(item));
+  return row;
+}
+
+function timeAgo(iso) {
+  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.round(hours / 24)}d ago`;
+}
+
+async function loadHistory() {
+  const list = el("history-list");
+  const empty = el("history-empty");
+  const error = el("history-error");
+  try {
+    const response = await fetch(`${API_EVALUATIONS}?limit=10`);
+    if (!response.ok) throw new Error(`history request failed: ${response.status}`);
+    const items = await response.json();
+    clearNode(list);
+    empty.hidden = items.length !== 0;
+    error.hidden = true;
+    items.forEach((item) => list.appendChild(historyRow(item)));
+  } catch {
+    empty.hidden = true;
+    error.hidden = false;
+  }
+}
+
+async function openHistory(item) {
+  try {
+    const response = await fetch(`${API_EVALUATIONS}/${item.id}`);
+    if (!response.ok) throw new Error(`history fetch failed: ${response.status}`);
+    const data = await response.json();
+    errorBox.hidden = true;
+    renderResult(data);
+    await loadHistory();
+  } catch {
+    showError("Could not load that evaluation from the history.");
+  }
+}
+
 analyzeBtn.addEventListener("click", async () => {
   const problem = clientError();
   if (problem) {
@@ -471,7 +537,8 @@ analyzeBtn.addEventListener("click", async () => {
       showError(formatApiError(data, response.status));
       return;
     }
-    await consumeStream(response);
+    const outcome = await consumeStream(response);
+    if (outcome.ok) await loadHistory();
   } catch {
     showError("Could not reach the CareerAgent server. Is it still running?");
   } finally {
@@ -480,3 +547,5 @@ analyzeBtn.addEventListener("click", async () => {
     analyzeBtn.disabled = false;
   }
 });
+
+loadHistory();

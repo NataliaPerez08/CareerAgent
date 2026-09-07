@@ -158,6 +158,9 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
   resume, extracting requirements, matching skills, preparing the
   recommendation, saving — instead of a dead spinner; model timeouts
   are reported explicitly as 504
+- **Recent evaluations**: the UI lists past runs (title, score,
+  recommendation, age) from the existing persistence layer and reopens
+  any stored evaluation with one click — no auth added
 - Structured `EvaluationResult` contract across CLI, API and UI
 - Skill **normalization**: aliases (`postgres` → `postgresql`,
   `cicd` → `ci/cd`, `cpp` → `c++`, `rest api development` →

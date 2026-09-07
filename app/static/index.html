@@ -57,6 +57,17 @@
       <p class="hint">Takes ~20–60 seconds. You can watch each step as the agent works.</p>
     </div>
 
+    <section class="card history" id="history">
+      <h3>Recent evaluations</h3>
+      <p class="hint" id="history-empty" hidden>
+        Nothing yet — run your first analysis and it will show up here.
+      </p>
+      <ul id="history-list" class="history-list"></ul>
+      <p class="hint" id="history-error" hidden>
+        History is unavailable right now (the database may be offline).
+      </p>
+    </section>
+
     <div id="status" class="status" hidden>
       <div class="status-head">
         <span class="spinner" aria-hidden="true"></span>
