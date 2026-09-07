@@ -74,3 +74,65 @@ def test_benchmark_rejects_bad_count(tmp_path):
     proc = run_benchmark(tmp_path, "--count", "0")
     assert proc.returncode == 1
     assert "--count must be >= 1" in proc.stderr
+
+
+def test_benchmark_rejects_warm_path_in_mock(tmp_path):
+    proc = run_benchmark(tmp_path, "--warm-path")
+    assert proc.returncode == 1
+    assert "use real mode" in proc.stderr
+
+
+def _load_benchmark():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("careeragent_benchmark", BENCHMARK)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _warm_summary(**overrides) -> dict:
+    summary = {
+        "generated_at": "2026-09-07T00:00:00+00:00",
+        "mode": "real (Amazon Bedrock)",
+        "model": "amazon.nova-micro-v1:0",
+        "region": "us-east-1",
+        "count": 4,
+        "invocations_ms": [5000.0, 4900.0, 4800.0, 4700.0],
+        "llm_cycles": [3, 3, 3, 3],
+        "degraded_threshold_ms": 20000.0,
+        "degraded_invocations": [],
+        "healthy_invocations_ms": [5000.0, 4900.0, 4800.0, 4700.0],
+        "first_ms": 5000.0,
+        "later_p50_ms": 4800.0,
+        "later_stats": {},
+        "delta_first_to_later_p50_ms": -200.0,
+        "healthy_first_ms": 5000.0,
+        "healthy_later_p50_ms": 4800.0,
+        "healthy_delta_ms": -200.0,
+    }
+    summary.update(overrides)
+    return summary
+
+
+def test_warm_path_report_says_no_significant_warm_up():
+    bm = _load_benchmark()
+    report = bm.build_warm_path_report(_warm_summary())
+    assert "no significant" in report
+    assert "500 ms" in report
+
+
+def test_warm_path_report_flags_degraded_service_invocations():
+    bm = _load_benchmark()
+    report = bm.build_warm_path_report(
+        _warm_summary(
+            invocations_ms=[64549.0, 5979.24, 5589.95, 4174.72],
+            degraded_invocations=[1],
+            healthy_invocations_ms=[5979.24, 5589.95, 4174.72],
+            healthy_first_ms=5979.24,
+            healthy_later_p50_ms=4174.72,
+            healthy_delta_ms=-1804.52,
+        )
+    )
+    assert "degraded" in report
+    assert "transient Bedrock service variance" in report

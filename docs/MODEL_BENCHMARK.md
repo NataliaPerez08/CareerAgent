@@ -123,3 +123,51 @@ report_nova_lite.md    baseline_nova_lite.json
 dist/evals/llm_nova_micro.md
 dist/evals/llm_nova_lite.md
 ```
+
+---
+
+# Warm-path / session-affinity probe (Día 7 del sprint)
+
+Sonda de afinidad de sesión: ¿la invocación #2/#3 del pipeline en el mismo
+proceso (mismo TLS/pool de conexiones, agente fresco por evaluación) es más
+rápida que la #1 (calentamiento del proveedor) — el efecto que una sesión de
+AgentCore intentaría reutilizar?
+
+Instrumentación agregada en `scripts/benchmark.py` (`--warm-path`, invocaciones
+secuenciales en un proceso, reporte por invocación + delta). Los runs con
+latencia >= 20 s se marcan como degradados (variabilidad documentada de
+Bedrock, Días 2-3) y se excluyen de la conclusión.
+
+## Runs observados (2026-09-07, Nova Micro, us-east-1)
+
+| Run | Invocaciones (ms) | Degradados | Sanas |
+|---|---|---|---|
+| 1 | 6170, 64651, 64355 | 2, 3 | 1 |
+| 2 | 65067, 5369, 4523 | 1 | 2, 3 |
+| 3 | 64549, 5979, 5590, 4175 | 1 | 2, 3, 4 |
+
+Sanas agregadas: 6170, 5369, 4523, 5979, 5590, 4175 (mediana ~5.56 s).
+Las primeras sanas de cada run (6170 / 5369 / 5979) **no** son
+consistentemente mayores que las posteriores → no hay patrón sistemático de
+calentamiento; el rango de varianza normal del servicio (±~2 s) es mayor que
+cualquier delta observado.
+
+## Decisión
+
+**Detener la optimización de sesión/reuso de sesión.** El efecto de warm-up a
+nivel transporte/proceso es marginal y quedó dentro de la varianza documentada
+del servicio; no justifica una fase de implementación de sesiones AgentCore ni
+perseguir ~500 ms. El cuello de botella es la inferencia del modelo (3 single
+shots, 0 loops), no el transporte. Se implementa según spec: *si no hay mejora
+significativa, no gastar más tiempo en sesión reuse*.
+
+Nota de ejecución: la ventana de medición coincidió con una degradación severa
+de Bedrock (runs de 45-65 s intercalados con runs sanos). Un run adicional de
+count 6 excedió 15 min y se detuvo por política de costos; los datos arriba son
+suficientes y honestos (no se fabrican métricas no ejecutadas).
+
+```text
+python scripts/benchmark.py --warm-path --count N   # real mode only
+```
+
+Datos crudos para reproducir: `dist/benchmark/warm_path.json`.

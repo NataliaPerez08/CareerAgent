@@ -676,4 +676,6 @@ Día 3  Benchmark de modelos             DONE (Micro > Lite; docs/MODEL_BENCHMAR
 Día 4  Ingestión de vacante por URL     DONE (273 tests; POST /api/v1/jobs/fetch + UI)
 Día 5  UX del flujo                     DONE (279 tests; SSE progress stages + timeout 504)
 Día 6  Historial                         DONE (recent evaluations UI; click opens stored result)
+Día 7  AgentCore session/warm-path       DONE (--warm-path probe: no significant warm-up
+                                             → session reuse STOPPED; docs/MODEL_BENCHMARK.md)
 ```

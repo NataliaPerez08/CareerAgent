@@ -176,6 +176,113 @@ def run_benchmark(
     return per_run, summary
 
 
+def run_warm_path(resume: str, job: str, count: int, mock: bool) -> dict:
+    """Sequential invocations in one process: a session-affinity probe.
+
+    Answers: does invocation #2/#3 get faster than #1 (provider warm-up,
+    TLS/connection reuse) or is latency flat because the model call is the
+    dominant cost? Each invocation still uses a fresh pipeline agent, as in
+    production — this is transport/process affinity, not agent state reuse.
+    """
+    walls: list[float] = []
+    per_run: list[dict] = []
+    cycles: list[int] = []
+    for i in range(1, count + 1):
+        started = time.perf_counter()
+        result, metrics = run_one(resume, job, mock)
+        wall_ms = round((time.perf_counter() - started) * 1000, 2)
+        walls.append(wall_ms)
+        cycles.append(metrics.get("llm_cycles") or 0)
+        per_run.append({**metrics, "run": i})
+        print(
+            f"  invocation {i}/{count}: wall={wall_ms}ms "
+            f"request_total={metrics.get('request_total_ms')}ms "
+            f"llm={metrics.get('llm_ms')}ms calls={metrics.get('llm_calls')} "
+            f"cycles={metrics.get('llm_cycles')} tool_calls={metrics.get('tool_calls')} "
+            f"-> {result.recommendation}"
+        )
+
+    first = walls[0]
+    later = walls[1:]
+    later_p50 = _percentile(sorted(later), 50) if later else None
+    degraded_threshold_ms = 20_000.0
+    healthy = [w for w in walls if w < degraded_threshold_ms]
+    healthy_first = healthy[0] if healthy else None
+    healthy_later = healthy[1:]
+    healthy_later_p50 = _percentile(sorted(healthy_later), 50) if healthy_later else None
+    report_delta = (
+        round(healthy_later_p50 - healthy_first, 2)
+        if healthy_first is not None and healthy_later_p50 is not None
+        else None
+    )
+    summary = {
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "mode": "mock (no LLM)" if mock else "real (Amazon Bedrock)",
+        "model": os.getenv("BEDROCK_MODEL_ID", "amazon.nova-micro-v1:0"),
+        "region": os.getenv("AWS_REGION", "us-east-1"),
+        "count": count,
+        "invocations_ms": walls,
+        "llm_cycles": cycles,
+        "degraded_threshold_ms": degraded_threshold_ms,
+        "degraded_invocations": [i for i, w in enumerate(walls, start=1) if w >= degraded_threshold_ms],
+        "healthy_invocations_ms": healthy,
+        "first_ms": first,
+        "later_p50_ms": later_p50,
+        "later_stats": _stats(later) if later else {},
+        "delta_first_to_later_p50_ms": (
+            round(later_p50 - first, 2) if later_p50 is not None else None
+        ),
+        "healthy_first_ms": healthy_first,
+        "healthy_later_p50_ms": healthy_later_p50,
+        "healthy_delta_ms": report_delta,
+    }
+    return summary
+
+
+def build_warm_path_report(summary: dict) -> str:
+    lines = ["Warm-path / session-affinity probe", "==================================", ""]
+    lines.append(f"Generated: {summary['generated_at']}")
+    lines.append(f"Mode: {summary['mode']}  Model: {summary['model']} ({summary['region']})")
+    lines.append(f"Sequential invocations in one process: {summary['count']}")
+    lines.append("")
+    for i, wall in enumerate(summary["invocations_ms"], start=1):
+        cycles = summary["llm_cycles"][i - 1]
+        lines.append(f"  invocation {i}: {wall} ms   (llm_cycles={cycles})")
+    lines.append("")
+    degraded = summary["degraded_invocations"]
+    if degraded:
+        lines.append(
+            f"NOTE: invocation(s) {degraded} were degraded (>= "
+            f"{summary['degraded_threshold_ms']:g} ms) — this is the documented "
+            "transient Bedrock service variance (see Days 2-3), not a warm-up effect. "
+            "Conclusion is based on healthy invocations only."
+        )
+        lines.append("")
+    healthy_first = summary["healthy_first_ms"]
+    healthy_later_p50 = summary["healthy_later_p50_ms"]
+    if healthy_first is not None and healthy_later_p50 is not None:
+        delta = summary["healthy_delta_ms"]
+        lines.append(
+            f"first healthy: {healthy_first} ms   healthy later p50: "
+            f"{healthy_later_p50} ms   delta: {delta:+.2f} ms"
+        )
+        lines.append("")
+        threshold_ms = 500.0
+        enough = (healthy_later_p50 - healthy_first) <= -threshold_ms
+        lines.append(
+            "Conclusion: session affinity / provider warm-up accounts for "
+            f"{'a significant' if enough else 'no significant'} "
+            f"share of latency at this layer (>= {threshold_ms:g} ms faster "
+            "would be the cutoff)."
+        )
+        lines.append(
+            "If insignificant, do not spend more sprint time on session reuse."
+        )
+    else:
+        lines.append("Not enough healthy invocations to draw a conclusion.")
+    return "\n".join(lines) + "\n"
+
+
 def build_report(summary: dict) -> str:
     lines: list[str] = []
     lines.append("CareerAgent Latency Benchmark")
@@ -278,6 +385,12 @@ def create_parser() -> argparse.ArgumentParser:
         default=DEFAULT_BASELINE,
         help="baseline json path (default: dist/benchmark/baseline.json)",
     )
+    parser.add_argument(
+        "--warm-path",
+        action="store_true",
+        help="session-affinity probe: report per-invocation latency for count "
+        "sequential runs in one process (real mode only)",
+    )
     parser.add_argument("--compare", action="store_true", help="print delta vs previous baseline")
     return parser
 
@@ -313,8 +426,28 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 1
 
+    if args.warm_path:
+        if args.mock:
+            print("ERROR: --warm-path measures provider/process warm-up; use real mode.", file=sys.stderr)
+            return 1
+        if args.count < 3:
+            print("ERROR: --warm-path needs at least 3 invocations.", file=sys.stderr)
+            return 1
+
     resume = args.resume.read_text(encoding="utf-8")
     job = args.job.read_text(encoding="utf-8")
+
+    if args.warm_path:
+        print(f"Warm-path probe: {args.count} sequential invocations (real mode)")
+        summary = run_warm_path(resume, job, args.count, args.mock)
+        report = build_warm_path_report(summary)
+        print()
+        print(report, end="")
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        warm_path_file = args.output.parent / "warm_path.json"
+        warm_path_file.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"Warm-path data written to {warm_path_file}")
+        return 0
 
     print(f"Running {args.count} evaluation(s) — mode: {'mock' if args.mock else 'real'}")
     per_run, summary = run_benchmark(resume, job, args.count, args.mock, str(args.resume), str(args.job))
