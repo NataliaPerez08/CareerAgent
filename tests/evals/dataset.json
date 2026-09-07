@@ -8,7 +8,12 @@
       "notes": "Full required coverage with alias variants (rest api development vs design and integration, postgres vs postgresql); preferred aws missing does not block APPLY.",
       "gold": {
         "profile": {
-          "skills": ["Python", "REST API design and integration", "PostgreSQL", "Docker"],
+          "skills": [
+            "Python",
+            "REST API design and integration",
+            "PostgreSQL",
+            "Docker"
+          ],
           "years_of_experience": 2,
           "evidence": [
             "2 years of professional backend development",
@@ -17,8 +22,15 @@
           ]
         },
         "requirements": {
-          "required_skills": ["Python", "REST API development", "Postgres", "Docker"],
-          "preferred_skills": ["AWS experience"],
+          "required_skills": [
+            "Python",
+            "REST API development",
+            "Postgres",
+            "Docker"
+          ],
+          "preferred_skills": [
+            "AWS experience"
+          ],
           "critical_skills": [],
           "unknown_requirements": [],
           "min_years_experience": 1
@@ -26,16 +38,26 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["docker", "postgresql", "python", "rest api"],
+          "matched_skills": [
+            "docker",
+            "postgresql",
+            "python",
+            "rest api"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
-          "missing_preferred_skills": ["aws"],
+          "missing_preferred_skills": [
+            "aws"
+          ],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["3 years of Kubernetes experience", "Led a team of five engineers"]
+        "hallucination_probes": [
+          "3 years of Kubernetes experience",
+          "Led a team of five engineers"
+        ]
       }
     },
     {
@@ -46,12 +68,23 @@
       "notes": "Every required skill matched; neither side states an experience gate (experience_match must be null, not false).",
       "gold": {
         "profile": {
-          "skills": ["Python", "SQL", "Tableau"],
+          "skills": [
+            "Python",
+            "SQL",
+            "Tableau"
+          ],
           "years_of_experience": 3,
-          "evidence": ["3 years of data analysis experience", "Tableau for executive dashboards"]
+          "evidence": [
+            "3 years of data analysis experience",
+            "Tableau for executive dashboards"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "SQL", "Tableau"],
+          "required_skills": [
+            "Python",
+            "SQL",
+            "Tableau"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -60,7 +93,11 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["python", "sql", "tableau"],
+          "matched_skills": [
+            "python",
+            "sql",
+            "tableau"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
@@ -69,7 +106,10 @@
           "unknown_requirements": [],
           "experience_match": null
         },
-        "hallucination_probes": ["Experience with Apache Spark", "Machine learning model deployment"]
+        "hallucination_probes": [
+          "Experience with Apache Spark",
+          "Machine learning model deployment"
+        ]
       }
     },
     {
@@ -80,7 +120,13 @@
       "notes": "Required fully matched plus a preferred skill matched (typescript); postgres alias on the resume side.",
       "gold": {
         "profile": {
-          "skills": ["JavaScript", "React", "Node.js", "Postgres", "TypeScript"],
+          "skills": [
+            "JavaScript",
+            "React",
+            "Node.js",
+            "Postgres",
+            "TypeScript"
+          ],
           "years_of_experience": 4,
           "evidence": [
             "4 years of fullstack web development",
@@ -89,8 +135,15 @@
           ]
         },
         "requirements": {
-          "required_skills": ["JavaScript", "React", "Node.js", "PostgreSQL"],
-          "preferred_skills": ["TypeScript"],
+          "required_skills": [
+            "JavaScript",
+            "React",
+            "Node.js",
+            "PostgreSQL"
+          ],
+          "preferred_skills": [
+            "TypeScript"
+          ],
           "critical_skills": [],
           "unknown_requirements": [],
           "min_years_experience": 2
@@ -98,8 +151,15 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["javascript", "node.js", "postgresql", "react"],
-          "matched_preferred_skills": ["typescript"],
+          "matched_skills": [
+            "javascript",
+            "node.js",
+            "postgresql",
+            "react"
+          ],
+          "matched_preferred_skills": [
+            "typescript"
+          ],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
@@ -107,7 +167,10 @@
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["GraphQL API development", "React Native mobile applications"]
+        "hallucination_probes": [
+          "GraphQL API development",
+          "React Native mobile applications"
+        ]
       }
     },
     {
@@ -118,13 +181,28 @@
       "notes": "Context-word stripping on the job side (AWS experience -> aws) and a matched preferred skill.",
       "gold": {
         "profile": {
-          "skills": ["Linux", "Docker", "Kubernetes", "AWS", "CI/CD"],
+          "skills": [
+            "Linux",
+            "Docker",
+            "Kubernetes",
+            "AWS",
+            "CI/CD"
+          ],
           "years_of_experience": 5,
-          "evidence": ["5 years of DevOps and platform work", "AWS for production infrastructure"]
+          "evidence": [
+            "5 years of DevOps and platform work",
+            "AWS for production infrastructure"
+          ]
         },
         "requirements": {
-          "required_skills": ["Linux", "Docker", "AWS experience"],
-          "preferred_skills": ["Kubernetes"],
+          "required_skills": [
+            "Linux",
+            "Docker",
+            "AWS experience"
+          ],
+          "preferred_skills": [
+            "Kubernetes"
+          ],
           "critical_skills": [],
           "unknown_requirements": [],
           "min_years_experience": 3
@@ -132,8 +210,14 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["aws", "docker", "linux"],
-          "matched_preferred_skills": ["kubernetes"],
+          "matched_skills": [
+            "aws",
+            "docker",
+            "linux"
+          ],
+          "matched_preferred_skills": [
+            "kubernetes"
+          ],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
@@ -141,7 +225,10 @@
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Terraform infrastructure as code", "Managed on-call rotations for 12 services"]
+        "hallucination_probes": [
+          "Terraform infrastructure as code",
+          "Managed on-call rotations for 12 services"
+        ]
       }
     },
     {
@@ -152,12 +239,25 @@
       "notes": "3 of 5 required skills matched (60%): MAYBE territory, experience gate met.",
       "gold": {
         "profile": {
-          "skills": ["Python", "PostgreSQL", "Docker"],
+          "skills": [
+            "Python",
+            "PostgreSQL",
+            "Docker"
+          ],
           "years_of_experience": 2,
-          "evidence": ["2 years of backend development", "Docker for local development"]
+          "evidence": [
+            "2 years of backend development",
+            "Docker for local development"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "Django", "PostgreSQL", "Docker", "Redis"],
+          "required_skills": [
+            "Python",
+            "Django",
+            "PostgreSQL",
+            "Docker",
+            "Redis"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -166,16 +266,26 @@
         "expected": {
           "recommendation": "MAYBE",
           "score": 60,
-          "matched_skills": ["docker", "postgresql", "python"],
+          "matched_skills": [
+            "docker",
+            "postgresql",
+            "python"
+          ],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["django", "redis"],
+          "missing_required_skills": [
+            "django",
+            "redis"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Redis caching layer implementation", "Django REST framework experience"]
+        "hallucination_probes": [
+          "Redis caching layer implementation",
+          "Django REST framework experience"
+        ]
       }
     },
     {
@@ -186,12 +296,24 @@
       "notes": "2 of 4 required matched (50%); the resume never states years so experience_match must stay null.",
       "gold": {
         "profile": {
-          "skills": ["Kotlin", "CI/CD", "Manual testing"],
+          "skills": [
+            "Kotlin",
+            "CI/CD",
+            "Manual testing"
+          ],
           "years_of_experience": null,
-          "evidence": ["Kotlin for Android applications", "CI/CD pipelines for store releases"]
+          "evidence": [
+            "Kotlin for Android applications",
+            "CI/CD pipelines for store releases"
+          ]
         },
         "requirements": {
-          "required_skills": ["Kotlin", "Jetpack Compose", "Retrofit", "CI/CD"],
+          "required_skills": [
+            "Kotlin",
+            "Jetpack Compose",
+            "Retrofit",
+            "CI/CD"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -200,16 +322,25 @@
         "expected": {
           "recommendation": "MAYBE",
           "score": 50,
-          "matched_skills": ["ci/cd", "kotlin"],
+          "matched_skills": [
+            "ci/cd",
+            "kotlin"
+          ],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["jetpack compose", "retrofit"],
+          "missing_required_skills": [
+            "jetpack compose",
+            "retrofit"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": null
         },
-        "hallucination_probes": ["5 years of Android development", "Retrofit integration with coroutines"]
+        "hallucination_probes": [
+          "5 years of Android development",
+          "Retrofit integration with coroutines"
+        ]
       }
     },
     {
@@ -220,12 +351,25 @@
       "notes": "3 of 5 required matched (60%) with the experience gate met: MAYBE driven by missing skills only.",
       "gold": {
         "profile": {
-          "skills": ["TypeScript", "React", "Jest"],
+          "skills": [
+            "TypeScript",
+            "React",
+            "Jest"
+          ],
           "years_of_experience": 3,
-          "evidence": ["3 years of frontend development", "Jest for unit testing"]
+          "evidence": [
+            "3 years of frontend development",
+            "Jest for unit testing"
+          ]
         },
         "requirements": {
-          "required_skills": ["TypeScript", "React", "GraphQL", "Jest", "Webpack"],
+          "required_skills": [
+            "TypeScript",
+            "React",
+            "GraphQL",
+            "Jest",
+            "Webpack"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -234,16 +378,26 @@
         "expected": {
           "recommendation": "MAYBE",
           "score": 60,
-          "matched_skills": ["jest", "react", "typescript"],
+          "matched_skills": [
+            "jest",
+            "react",
+            "typescript"
+          ],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["graphql", "webpack"],
+          "missing_required_skills": [
+            "graphql",
+            "webpack"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Webpack bundle optimization", "GraphQL schema design"]
+        "hallucination_probes": [
+          "Webpack bundle optimization",
+          "GraphQL schema design"
+        ]
       }
     },
     {
@@ -254,12 +408,24 @@
       "notes": "Policy nuance: a single missing required skill (3/4 = 75) still yields APPLY; only critical skills force SKIP.",
       "gold": {
         "profile": {
-          "skills": ["Python", "PostgreSQL", "Docker"],
+          "skills": [
+            "Python",
+            "PostgreSQL",
+            "Docker"
+          ],
           "years_of_experience": 3,
-          "evidence": ["3 years of backend development", "Python for services and automation"]
+          "evidence": [
+            "3 years of backend development",
+            "Python for services and automation"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "PostgreSQL", "Docker", "Kubernetes"],
+          "required_skills": [
+            "Python",
+            "PostgreSQL",
+            "Docker",
+            "Kubernetes"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -268,16 +434,25 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 75,
-          "matched_skills": ["docker", "postgresql", "python"],
+          "matched_skills": [
+            "docker",
+            "postgresql",
+            "python"
+          ],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["kubernetes"],
+          "missing_required_skills": [
+            "kubernetes"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Kubernetes cluster administration", "Helm chart deployments"]
+        "hallucination_probes": [
+          "Kubernetes cluster administration",
+          "Helm chart deployments"
+        ]
       }
     },
     {
@@ -288,12 +463,25 @@
       "notes": "Two missing required skills (3/5 = 60) push the score below the APPLY threshold.",
       "gold": {
         "profile": {
-          "skills": ["Python", "Docker", "PostgreSQL"],
+          "skills": [
+            "Python",
+            "Docker",
+            "PostgreSQL"
+          ],
           "years_of_experience": 4,
-          "evidence": ["4 years of backend engineering", "Python for service development"]
+          "evidence": [
+            "4 years of backend engineering",
+            "Python for service development"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "PostgreSQL", "Docker", "AWS", "Kubernetes"],
+          "required_skills": [
+            "Python",
+            "PostgreSQL",
+            "Docker",
+            "AWS",
+            "Kubernetes"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -302,16 +490,26 @@
         "expected": {
           "recommendation": "MAYBE",
           "score": 60,
-          "matched_skills": ["docker", "postgresql", "python"],
+          "matched_skills": [
+            "docker",
+            "postgresql",
+            "python"
+          ],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["aws", "kubernetes"],
+          "missing_required_skills": [
+            "aws",
+            "kubernetes"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["AWS Lambda in production", "Kubernetes operators development"]
+        "hallucination_probes": [
+          "AWS Lambda in production",
+          "Kubernetes operators development"
+        ]
       }
     },
     {
@@ -322,12 +520,23 @@
       "notes": "Core framework and database missing (2/4 = 50): MAYBE, not SKIP, because nothing is critical.",
       "gold": {
         "profile": {
-          "skills": ["Java", "Docker"],
+          "skills": [
+            "Java",
+            "Docker"
+          ],
           "years_of_experience": 4,
-          "evidence": ["4 years of JVM development", "Docker for service packaging"]
+          "evidence": [
+            "4 years of JVM development",
+            "Docker for service packaging"
+          ]
         },
         "requirements": {
-          "required_skills": ["Java", "Spring Boot", "PostgreSQL", "Docker"],
+          "required_skills": [
+            "Java",
+            "Spring Boot",
+            "PostgreSQL",
+            "Docker"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -336,16 +545,25 @@
         "expected": {
           "recommendation": "MAYBE",
           "score": 50,
-          "matched_skills": ["docker", "java"],
+          "matched_skills": [
+            "docker",
+            "java"
+          ],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["postgresql", "spring boot"],
+          "missing_required_skills": [
+            "postgresql",
+            "spring boot"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Spring Boot microservices", "PostgreSQL performance tuning"]
+        "hallucination_probes": [
+          "Spring Boot microservices",
+          "PostgreSQL performance tuning"
+        ]
       }
     },
     {
@@ -356,13 +574,25 @@
       "notes": "All preferred skills missing must not block APPLY when required coverage is complete.",
       "gold": {
         "profile": {
-          "skills": ["Python", "PostgreSQL"],
+          "skills": [
+            "Python",
+            "PostgreSQL"
+          ],
           "years_of_experience": 2,
-          "evidence": ["2 years of backend development", "PostgreSQL for relational persistence"]
+          "evidence": [
+            "2 years of backend development",
+            "PostgreSQL for relational persistence"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "PostgreSQL"],
-          "preferred_skills": ["AWS", "Kubernetes"],
+          "required_skills": [
+            "Python",
+            "PostgreSQL"
+          ],
+          "preferred_skills": [
+            "AWS",
+            "Kubernetes"
+          ],
           "critical_skills": [],
           "unknown_requirements": [],
           "min_years_experience": 1
@@ -370,16 +600,25 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["postgresql", "python"],
+          "matched_skills": [
+            "postgresql",
+            "python"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
-          "missing_preferred_skills": ["aws", "kubernetes"],
+          "missing_preferred_skills": [
+            "aws",
+            "kubernetes"
+          ],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["AWS certified solutions architect", "Kubernetes ingress configuration"]
+        "hallucination_probes": [
+          "AWS certified solutions architect",
+          "Kubernetes ingress configuration"
+        ]
       }
     },
     {
@@ -390,13 +629,24 @@
       "notes": "A missing non-technical preferred skill (language) never disqualifies.",
       "gold": {
         "profile": {
-          "skills": ["SQL", "Python"],
+          "skills": [
+            "SQL",
+            "Python"
+          ],
           "years_of_experience": 4,
-          "evidence": ["4 years of analytics engineering", "SQL for data transformation"]
+          "evidence": [
+            "4 years of analytics engineering",
+            "SQL for data transformation"
+          ]
         },
         "requirements": {
-          "required_skills": ["SQL", "Python"],
-          "preferred_skills": ["Spanish"],
+          "required_skills": [
+            "SQL",
+            "Python"
+          ],
+          "preferred_skills": [
+            "Spanish"
+          ],
           "critical_skills": [],
           "unknown_requirements": [],
           "min_years_experience": 2
@@ -404,16 +654,24 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["python", "sql"],
+          "matched_skills": [
+            "python",
+            "sql"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
-          "missing_preferred_skills": ["spanish"],
+          "missing_preferred_skills": [
+            "spanish"
+          ],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Professional working proficiency in Spanish", "Looker dashboard development"]
+        "hallucination_probes": [
+          "Professional working proficiency in Spanish",
+          "Looker dashboard development"
+        ]
       }
     },
     {
@@ -424,13 +682,27 @@
       "notes": "Complete required coverage with the whole preferred list missing: still APPLY at 100.",
       "gold": {
         "profile": {
-          "skills": ["Go", "PostgreSQL", "Docker"],
+          "skills": [
+            "Go",
+            "PostgreSQL",
+            "Docker"
+          ],
           "years_of_experience": 3,
-          "evidence": ["3 years of backend development in Go", "Docker for deployment packaging"]
+          "evidence": [
+            "3 years of backend development in Go",
+            "Docker for deployment packaging"
+          ]
         },
         "requirements": {
-          "required_skills": ["Go", "PostgreSQL", "Docker"],
-          "preferred_skills": ["Kubernetes", "Terraform"],
+          "required_skills": [
+            "Go",
+            "PostgreSQL",
+            "Docker"
+          ],
+          "preferred_skills": [
+            "Kubernetes",
+            "Terraform"
+          ],
           "critical_skills": [],
           "unknown_requirements": [],
           "min_years_experience": 2
@@ -438,16 +710,26 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["docker", "go", "postgresql"],
+          "matched_skills": [
+            "docker",
+            "go",
+            "postgresql"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
-          "missing_preferred_skills": ["kubernetes", "terraform"],
+          "missing_preferred_skills": [
+            "kubernetes",
+            "terraform"
+          ],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Terraform modules for AWS", "Kubernetes service mesh experience"]
+        "hallucination_probes": [
+          "Terraform modules for AWS",
+          "Kubernetes service mesh experience"
+        ]
       }
     },
     {
@@ -458,30 +740,51 @@
       "notes": "Perfect skill coverage but an explicit experience gate: the policy must downgrade to MAYBE, and the critical skill (python) is matched so it does not force SKIP.",
       "gold": {
         "profile": {
-          "skills": ["Python", "REST API design and integration", "PostgreSQL"],
+          "skills": [
+            "Python",
+            "REST API design and integration",
+            "PostgreSQL"
+          ],
           "years_of_experience": 1,
-          "evidence": ["1 year of professional backend development", "REST API design and integration"]
+          "evidence": [
+            "1 year of professional backend development",
+            "REST API design and integration"
+          ]
         },
         "requirements": {
-          "required_skills": ["REST API development", "PostgreSQL"],
+          "required_skills": [
+            "REST API development",
+            "PostgreSQL"
+          ],
           "preferred_skills": [],
-          "critical_skills": ["Python"],
+          "critical_skills": [
+            "Python"
+          ],
           "unknown_requirements": [],
           "min_years_experience": 5
         },
         "expected": {
           "recommendation": "MAYBE",
           "score": 100,
-          "matched_skills": ["postgresql", "python", "rest api"],
+          "matched_skills": [
+            "postgresql",
+            "python",
+            "rest api"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
-          "critical_skills": ["python"],
+          "critical_skills": [
+            "python"
+          ],
           "unknown_requirements": [],
           "experience_match": false
         },
-        "hallucination_probes": ["5 years of backend experience", "Mentored junior developers"]
+        "hallucination_probes": [
+          "5 years of backend experience",
+          "Mentored junior developers"
+        ]
       }
     },
     {
@@ -492,12 +795,23 @@
       "notes": "100% skill match with an explicit 4-year gate against 2 years: MAYBE.",
       "gold": {
         "profile": {
-          "skills": ["SQL", "Python", "Spark"],
+          "skills": [
+            "SQL",
+            "Python",
+            "Spark"
+          ],
           "years_of_experience": 2,
-          "evidence": ["2 years of data engineering", "Spark for batch pipelines"]
+          "evidence": [
+            "2 years of data engineering",
+            "Spark for batch pipelines"
+          ]
         },
         "requirements": {
-          "required_skills": ["SQL", "Python", "Spark"],
+          "required_skills": [
+            "SQL",
+            "Python",
+            "Spark"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -506,7 +820,11 @@
         "expected": {
           "recommendation": "MAYBE",
           "score": 100,
-          "matched_skills": ["python", "spark", "sql"],
+          "matched_skills": [
+            "python",
+            "spark",
+            "sql"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
@@ -515,7 +833,10 @@
           "unknown_requirements": [],
           "experience_match": false
         },
-        "hallucination_probes": ["4 years of data engineering", "Led migration from Hadoop"]
+        "hallucination_probes": [
+          "4 years of data engineering",
+          "Led migration from Hadoop"
+        ]
       }
     },
     {
@@ -526,12 +847,23 @@
       "notes": "The resume never states years: experience is unknown (null), which must NOT be treated as a mismatch. APPLY stands.",
       "gold": {
         "profile": {
-          "skills": ["C++", "Rust", "Linux"],
+          "skills": [
+            "C++",
+            "Rust",
+            "Linux"
+          ],
           "years_of_experience": null,
-          "evidence": ["C++ for firmware components", "Rust for safety-critical tooling"]
+          "evidence": [
+            "C++ for firmware components",
+            "Rust for safety-critical tooling"
+          ]
         },
         "requirements": {
-          "required_skills": ["C++", "Rust", "Linux"],
+          "required_skills": [
+            "C++",
+            "Rust",
+            "Linux"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -540,7 +872,11 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["c++", "linux", "rust"],
+          "matched_skills": [
+            "c++",
+            "linux",
+            "rust"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
@@ -549,7 +885,10 @@
           "unknown_requirements": [],
           "experience_match": null
         },
-        "hallucination_probes": ["6 years of systems programming", "Linux kernel contributor"]
+        "hallucination_probes": [
+          "6 years of systems programming",
+          "Linux kernel contributor"
+        ]
       }
     },
     {
@@ -560,30 +899,51 @@
       "notes": "Stack mentions without required/preferred wording must stay unknown and never dilute the score.",
       "gold": {
         "profile": {
-          "skills": ["Python", "PostgreSQL"],
+          "skills": [
+            "Python",
+            "PostgreSQL"
+          ],
           "years_of_experience": 3,
-          "evidence": ["3 years of backend development", "Python for backend services"]
+          "evidence": [
+            "3 years of backend development",
+            "Python for backend services"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "PostgreSQL"],
+          "required_skills": [
+            "Python",
+            "PostgreSQL"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
-          "unknown_requirements": ["Kubernetes", "Terraform"],
+          "unknown_requirements": [
+            "Kubernetes",
+            "Terraform"
+          ],
           "min_years_experience": 2
         },
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["postgresql", "python"],
+          "matched_skills": [
+            "postgresql",
+            "python"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
-          "unknown_requirements": ["kubernetes", "terraform"],
+          "unknown_requirements": [
+            "kubernetes",
+            "terraform"
+          ],
           "experience_match": true
         },
-        "hallucination_probes": ["Kubernetes cluster operations", "Terraform state management"]
+        "hallucination_probes": [
+          "Kubernetes cluster operations",
+          "Terraform state management"
+        ]
       }
     },
     {
@@ -594,30 +954,46 @@
       "notes": "A single ambiguous stack mention stays unknown and out of the score.",
       "gold": {
         "profile": {
-          "skills": ["Docker"],
+          "skills": [
+            "Docker"
+          ],
           "years_of_experience": 2,
-          "evidence": ["2 years of platform engineering", "Docker for service packaging"]
+          "evidence": [
+            "2 years of platform engineering",
+            "Docker for service packaging"
+          ]
         },
         "requirements": {
-          "required_skills": ["Docker"],
+          "required_skills": [
+            "Docker"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
-          "unknown_requirements": ["Redis"],
+          "unknown_requirements": [
+            "Redis"
+          ],
           "min_years_experience": 1
         },
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["docker"],
+          "matched_skills": [
+            "docker"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
-          "unknown_requirements": ["redis"],
+          "unknown_requirements": [
+            "redis"
+          ],
           "experience_match": true
         },
-        "hallucination_probes": ["Redis cluster administration", "Memcached migration project"]
+        "hallucination_probes": [
+          "Redis cluster administration",
+          "Memcached migration project"
+        ]
       }
     },
     {
@@ -628,30 +1004,48 @@
       "notes": "Infrastructure named without status language must be classified unknown, never required.",
       "gold": {
         "profile": {
-          "skills": ["Go"],
+          "skills": [
+            "Go"
+          ],
           "years_of_experience": 2,
-          "evidence": ["2 years of backend development", "Go for network services"]
+          "evidence": [
+            "2 years of backend development",
+            "Go for network services"
+          ]
         },
         "requirements": {
-          "required_skills": ["Go"],
+          "required_skills": [
+            "Go"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
-          "unknown_requirements": ["AWS", "Kafka"],
+          "unknown_requirements": [
+            "AWS",
+            "Kafka"
+          ],
           "min_years_experience": 1
         },
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["go"],
+          "matched_skills": [
+            "go"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
-          "unknown_requirements": ["aws", "kafka"],
+          "unknown_requirements": [
+            "aws",
+            "kafka"
+          ],
           "experience_match": true
         },
-        "hallucination_probes": ["AWS ECS production workloads", "Kafka streams processing"]
+        "hallucination_probes": [
+          "AWS ECS production workloads",
+          "Kafka streams processing"
+        ]
       }
     },
     {
@@ -662,12 +1056,21 @@
       "notes": "Both sides use different aliases of the same skills: rest api development == rest api design and integration; Postgres == PostgreSQL.",
       "gold": {
         "profile": {
-          "skills": ["REST API design and integration", "PostgreSQL"],
+          "skills": [
+            "REST API design and integration",
+            "PostgreSQL"
+          ],
           "years_of_experience": 2,
-          "evidence": ["REST API design and integration", "PostgreSQL for relational persistence"]
+          "evidence": [
+            "REST API design and integration",
+            "PostgreSQL for relational persistence"
+          ]
         },
         "requirements": {
-          "required_skills": ["REST API development", "Postgres"],
+          "required_skills": [
+            "REST API development",
+            "Postgres"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -676,7 +1079,10 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["postgresql", "rest api"],
+          "matched_skills": [
+            "postgresql",
+            "rest api"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
@@ -685,7 +1091,10 @@
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["GraphQL API development", "gRPC service definitions"]
+        "hallucination_probes": [
+          "GraphQL API development",
+          "gRPC service definitions"
+        ]
       }
     },
     {
@@ -696,12 +1105,23 @@
       "notes": "Context words attached by the job side (experience with / familiarity with / proficiency in) must be stripped before matching.",
       "gold": {
         "profile": {
-          "skills": ["AWS", "CI/CD", "Python"],
+          "skills": [
+            "AWS",
+            "CI/CD",
+            "Python"
+          ],
           "years_of_experience": 3,
-          "evidence": ["AWS for deployment pipelines", "CI/CD for release automation"]
+          "evidence": [
+            "AWS for deployment pipelines",
+            "CI/CD for release automation"
+          ]
         },
         "requirements": {
-          "required_skills": ["AWS experience", "Familiarity with CI/CD", "Proficiency in Python"],
+          "required_skills": [
+            "AWS experience",
+            "Familiarity with CI/CD",
+            "Proficiency in Python"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -710,7 +1130,11 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["aws", "ci/cd", "python"],
+          "matched_skills": [
+            "aws",
+            "ci/cd",
+            "python"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
@@ -719,7 +1143,10 @@
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Azure DevOps migrations", "Python machine learning projects"]
+        "hallucination_probes": [
+          "Azure DevOps migrations",
+          "Python machine learning projects"
+        ]
       }
     },
     {
@@ -730,12 +1157,23 @@
       "notes": "Plural and short-form aliases: REST APIs -> rest api, Postgres -> postgresql.",
       "gold": {
         "profile": {
-          "skills": ["REST API", "PostgreSQL", "Docker"],
+          "skills": [
+            "REST API",
+            "PostgreSQL",
+            "Docker"
+          ],
           "years_of_experience": 2,
-          "evidence": ["REST API for service interfaces", "Docker for deployment packaging"]
+          "evidence": [
+            "REST API for service interfaces",
+            "Docker for deployment packaging"
+          ]
         },
         "requirements": {
-          "required_skills": ["REST APIs", "Postgres", "Docker"],
+          "required_skills": [
+            "REST APIs",
+            "Postgres",
+            "Docker"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -744,7 +1182,11 @@
         "expected": {
           "recommendation": "APPLY",
           "score": 100,
-          "matched_skills": ["docker", "postgresql", "rest api"],
+          "matched_skills": [
+            "docker",
+            "postgresql",
+            "rest api"
+          ],
           "matched_preferred_skills": [],
           "missing_required_skills": [],
           "missing_preferred_skills": [],
@@ -753,7 +1195,10 @@
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["SOAP integration experience", "PostgreSQL replication setup"]
+        "hallucination_probes": [
+          "SOAP integration experience",
+          "PostgreSQL replication setup"
+        ]
       }
     },
     {
@@ -764,12 +1209,27 @@
       "notes": "Six years of deep but unrelated experience: zero required coverage forces SKIP regardless of seniority.",
       "gold": {
         "profile": {
-          "skills": ["C", "Embedded C", "Arduino", "RTOS", "Circuit design"],
+          "skills": [
+            "C",
+            "Embedded C",
+            "Arduino",
+            "RTOS",
+            "Circuit design"
+          ],
           "years_of_experience": 6,
-          "evidence": ["6 years of embedded systems development", "RTOS for real-time firmware"]
+          "evidence": [
+            "6 years of embedded systems development",
+            "RTOS for real-time firmware"
+          ]
         },
         "requirements": {
-          "required_skills": ["Python", "Django", "PostgreSQL", "Docker", "React"],
+          "required_skills": [
+            "Python",
+            "Django",
+            "PostgreSQL",
+            "Docker",
+            "React"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -780,14 +1240,23 @@
           "score": 0,
           "matched_skills": [],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["django", "docker", "postgresql", "python", "react"],
+          "missing_required_skills": [
+            "django",
+            "docker",
+            "postgresql",
+            "python",
+            "react"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["React single page applications", "Python data pipelines"]
+        "hallucination_probes": [
+          "React single page applications",
+          "Python data pipelines"
+        ]
       }
     },
     {
@@ -798,12 +1267,25 @@
       "notes": "Distinguished academic career with no overlap on the required engineering stack: SKIP.",
       "gold": {
         "profile": {
-          "skills": ["MATLAB", "Simulink", "Research methodology", "Scientific publishing"],
+          "skills": [
+            "MATLAB",
+            "Simulink",
+            "Research methodology",
+            "Scientific publishing"
+          ],
           "years_of_experience": 7,
-          "evidence": ["7 years of academic research", "MATLAB for computational models"]
+          "evidence": [
+            "7 years of academic research",
+            "MATLAB for computational models"
+          ]
         },
         "requirements": {
-          "required_skills": ["Java", "Spring Boot", "SQL", "Git"],
+          "required_skills": [
+            "Java",
+            "Spring Boot",
+            "SQL",
+            "Git"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -814,14 +1296,22 @@
           "score": 0,
           "matched_skills": [],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["git", "java", "spring boot", "sql"],
+          "missing_required_skills": [
+            "git",
+            "java",
+            "spring boot",
+            "sql"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Java microservices at scale", "Spring Boot dependency injection"]
+        "hallucination_probes": [
+          "Java microservices at scale",
+          "Spring Boot dependency injection"
+        ]
       }
     },
     {
@@ -832,12 +1322,26 @@
       "notes": "Adjacent-discipline profile with no backend overlap: SKIP at 0% required coverage.",
       "gold": {
         "profile": {
-          "skills": ["HTML", "CSS", "JavaScript", "Figma", "Photoshop"],
+          "skills": [
+            "HTML",
+            "CSS",
+            "JavaScript",
+            "Figma",
+            "Photoshop"
+          ],
           "years_of_experience": 3,
-          "evidence": ["3 years of web design", "Figma for design systems"]
+          "evidence": [
+            "3 years of web design",
+            "Figma for design systems"
+          ]
         },
         "requirements": {
-          "required_skills": ["Go", "PostgreSQL", "gRPC", "Docker"],
+          "required_skills": [
+            "Go",
+            "PostgreSQL",
+            "gRPC",
+            "Docker"
+          ],
           "preferred_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
@@ -848,14 +1352,476 @@
           "score": 0,
           "matched_skills": [],
           "matched_preferred_skills": [],
-          "missing_required_skills": ["docker", "go", "grpc", "postgresql"],
+          "missing_required_skills": [
+            "docker",
+            "go",
+            "grpc",
+            "postgresql"
+          ],
           "missing_preferred_skills": [],
           "missing_critical_skills": [],
           "critical_skills": [],
           "unknown_requirements": [],
           "experience_match": true
         },
-        "hallucination_probes": ["Go concurrency patterns", "gRPC deadline configuration"]
+        "hallucination_probes": [
+          "Go concurrency patterns",
+          "gRPC deadline configuration"
+        ]
+      }
+    },
+    {
+      "case_id": "url_ingestion_fetched_posting_01",
+      "category": "url_ingestion",
+      "resume": "Backend developer with 2 years of backend development experience.\n\nSkills:\n- Python for backend services.\n- REST API design and integration.\n- PostgreSQL for relational persistence.",
+      "job_description": "Backend Engineer — Acme Corp\n\nAcme Corp is hiring a backend engineer to build services. Requirements are Python, REST API development, and PostgreSQL. Docker is nice to have.",
+      "notes": "Regression for Day 4: a posting fetched from a URL (meta title + company + body) must flow through extraction unchanged.",
+      "gold": {
+        "profile": {
+          "skills": [
+            "Python",
+            "REST API design and integration",
+            "PostgreSQL"
+          ],
+          "years_of_experience": 2,
+          "evidence": [
+            "2 years of backend development",
+            "Python for backend services",
+            "PostgreSQL for relational persistence"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "Python",
+            "REST API development",
+            "PostgreSQL"
+          ],
+          "preferred_skills": [
+            "Docker"
+          ],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "postgresql",
+            "python",
+            "rest api"
+          ],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [
+            "docker"
+          ],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Exposure to Kubernetes operators",
+          "Wrote Terraform modules for a data platform"
+        ]
+      }
+    },
+    {
+      "case_id": "url_ingestion_minimal_meta_02",
+      "category": "url_ingestion",
+      "resume": "Frontend developer with 2 years of frontend experience.\n\nSkills:\n- JavaScript.\n- React.\n- TypeScript.",
+      "job_description": "We are looking for a frontend engineer. Requirements include JavaScript, React and TypeScript.",
+      "notes": "Regression: a stripped page body with no title/company meta still extracts cleanly.",
+      "gold": {
+        "profile": {
+          "skills": [
+            "JavaScript",
+            "React",
+            "TypeScript"
+          ],
+          "years_of_experience": 2,
+          "evidence": [
+            "2 years of frontend experience",
+            "JavaScript",
+            "TypeScript"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "JavaScript",
+            "React",
+            "TypeScript"
+          ],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "javascript",
+            "react",
+            "typescript"
+          ],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Built accessibility tooling at scale",
+          "Led design systems for three products"
+        ]
+      }
+    },
+    {
+      "case_id": "skill_alias_ci_cd_cpp",
+      "category": "skill_alias",
+      "resume": "DevOps engineer with 3 years of experience.\n\nSkills:\n- cicd pipelines for delivery.\n- cpp for performance utilities.",
+      "job_description": "DevOps Engineer\n\nRequirements:\n- CI/CD.\n- C++.",
+      "notes": "Aliases nuevos: cicd -> ci/cd and cpp -> c++ must both match their spelled variants in the job.",
+      "gold": {
+        "profile": {
+          "skills": [
+            "cicd",
+            "cpp"
+          ],
+          "years_of_experience": 3,
+          "evidence": [
+            "cicd pipelines for delivery",
+            "cpp for performance utilities"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "CI/CD",
+            "C++"
+          ],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "c++",
+            "ci/cd"
+          ],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Managed Grafana dashboards for on-call",
+          "Rebuilt the GitLab runner fleet"
+        ]
+      }
+    },
+    {
+      "case_id": "pipeline_optimized_no_tool_loop_01",
+      "category": "pipeline_regression",
+      "resume": "Platform developer with 3 years of platform engineering experience.\n\nSkills:\n- Go for tooling.\n- Terraform for infrastructure.\n- Kubernetes for orchestration.",
+      "job_description": "Platform Engineer\n\nRequirements:\n- Go.\n- Terraform.\n- Kubernetes.",
+      "notes": "Regression for Day 2: the single-shot 3-call pipeline must reproduce the same recommendation as the tool-driven flow.",
+      "gold": {
+        "profile": {
+          "skills": [
+            "Go",
+            "Terraform",
+            "Kubernetes"
+          ],
+          "years_of_experience": 3,
+          "evidence": [
+            "3 years of platform engineering experience",
+            "Terraform for infrastructure"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "Go",
+            "Terraform",
+            "Kubernetes"
+          ],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "go",
+            "kubernetes",
+            "terraform"
+          ],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Built a service mesh in Istio",
+          "Managed an on-prem OpenStack cloud"
+        ]
+      }
+    },
+    {
+      "case_id": "model_switch_ambiguous_prose_01",
+      "category": "model_switch",
+      "resume": "Python developer with 4 years of experience.\n\nSkills:\n- Python.\n- Flask.\n- SQLite.",
+      "job_description": "Python Developer\n\nWe are looking for a developer with strong Python skills. Cloud experience is a plus. Flask experience is preferred.",
+      "notes": "Model-switch guard: an ambiguous prose requirement. If a future model change fixes 'plus' -> preferred classification, this case shows it (current Nova Micro documents the failure).",
+      "gold": {
+        "profile": {
+          "skills": [
+            "Python",
+            "Flask",
+            "SQLite"
+          ],
+          "years_of_experience": 4,
+          "evidence": [
+            "4 years of experience",
+            "Python"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "Python"
+          ],
+          "preferred_skills": [
+            "Cloud",
+            "Flask"
+          ],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "python"
+          ],
+          "matched_preferred_skills": [
+            "flask"
+          ],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [
+            "cloud"
+          ],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Deployed services on AWS ECS",
+          "Managed a migration to Snowflake"
+        ]
+      }
+    },
+    {
+      "case_id": "fabricated_evidence_guard_01",
+      "category": "fabricated_evidence",
+      "resume": "QA engineer focused on test automation.\n\nSkills:\n- Selenium.\n- Python for test scripts.\n- Jenkins.",
+      "job_description": "QA Automation Engineer\n\nRequirements:\n- Selenium.\n- Python.\n- Jenkins.",
+      "notes": "Heavy fabrication probes: none of the invented claims may survive evidence validation (Day 9 regression).",
+      "gold": {
+        "profile": {
+          "skills": [
+            "Selenium",
+            "Python",
+            "Jenkins"
+          ],
+          "years_of_experience": null,
+          "evidence": [
+            "QA engineer focused on test automation",
+            "Python for test scripts",
+            "Selenium",
+            "Jenkins"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "Selenium",
+            "Python",
+            "Jenkins"
+          ],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "jenkins",
+            "python",
+            "selenium"
+          ],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Led a 20-person engineering org at a FAANG company",
+          "Designed recommendation systems at scale",
+          "5 years as a staff engineer building ML pipelines",
+          "Built AWS Lambda data pipelines for the finance team"
+        ]
+      }
+    },
+    {
+      "case_id": "batch_ranking_rank_order_01",
+      "category": "batch_ranking",
+      "resume": "Backend developer with 3 years of experience.\n\nSkills:\n- Python.\n- PostgreSQL.\n- Docker.\n- REST API design.",
+      "job_description": "Backend Engineer\n\nRequirements: Python, PostgreSQL and REST API development. Docker helps.",
+      "notes": "Day 8 regression: the cheap deterministic ranker must order jobs by share of candidate skills mentioned, and the deep pipeline must agree on the top job.",
+      "gold": {
+        "profile": {
+          "skills": [
+            "Python",
+            "PostgreSQL",
+            "Docker",
+            "REST API design"
+          ],
+          "years_of_experience": 3,
+          "evidence": [
+            "3 years of experience",
+            "Python",
+            "PostgreSQL"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "Python",
+            "PostgreSQL",
+            "REST API development"
+          ],
+          "preferred_skills": [
+            "Docker"
+          ],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "postgresql",
+            "python",
+            "rest api"
+          ],
+          "matched_preferred_skills": [
+            "docker"
+          ],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Ran a large Kubernetes cluster",
+          "Wrote gRPC services for payments"
+        ]
+      },
+      "quick_rank": {
+        "expected_order": [
+          "Backend Engineer",
+          "Data Engineer",
+          "SRE"
+        ],
+        "jobs": [
+          {
+            "title": "Backend Engineer",
+            "description": "We need Python, PostgreSQL and REST API devs. Docker helps."
+          },
+          {
+            "title": "Data Engineer",
+            "description": "We need Python and PostgreSQL."
+          },
+          {
+            "title": "SRE",
+            "description": "We run Docker everywhere."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "ambiguous_requirement_or_plus_01",
+      "category": "ambiguous_requirement",
+      "resume": "Backend developer with 2 years of experience.\n\nSkills:\n- Python.\n- Django.",
+      "job_description": "Backend Developer\n\nRequirements: Python. Familiarity with Docker or experience with Kubernetes is a nice-to-have.",
+      "notes": "Ambiguous prose: 'nice-to-have' soft language must not be classified mandatory. Documented Nova Micro weakness on this pattern.",
+      "gold": {
+        "profile": {
+          "skills": [
+            "Python",
+            "Django"
+          ],
+          "years_of_experience": 2,
+          "evidence": [
+            "2 years of experience",
+            "Python"
+          ]
+        },
+        "requirements": {
+          "required_skills": [
+            "Python"
+          ],
+          "preferred_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [
+            "Docker",
+            "Kubernetes"
+          ],
+          "min_years_experience": null
+        },
+        "expected": {
+          "recommendation": "APPLY",
+          "score": 100,
+          "matched_skills": [
+            "python"
+          ],
+          "matched_preferred_skills": [],
+          "missing_required_skills": [],
+          "missing_preferred_skills": [],
+          "missing_critical_skills": [],
+          "critical_skills": [],
+          "unknown_requirements": [
+            "docker",
+            "kubernetes"
+          ],
+          "experience_match": null
+        },
+        "hallucination_probes": [
+          "Built a job queue in Celery",
+          "Administrated an on-prem Hadoop cluster"
+        ]
       }
     }
   ]

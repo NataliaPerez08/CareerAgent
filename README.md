@@ -179,51 +179,50 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
 
 ## Evaluation
 
-Results from a concrete execution — **2026-09-01, Amazon Nova Micro
-(`amazon.nova-micro-v1:0`), temperature 0.2, 25 cases, us-east-1** —
-not eternally hardcoded numbers. Re-run with `make eval` /
+Deterministic tier results from a concrete execution — **2026-09-07, 33
+cases (25 original + 8 regression cases added on sprint Day 9)** — not
+eternally hardcoded numbers. Re-run with `make eval` /
 `make eval-llm`:
 
 ```text
 Deterministic tier (no LLM, reproducible)
-Correct recommendation:      100% (25/25)
-Match exactness:             100% (25/25)
-Requirement classification:  100% (25/25)
-Evidence grounding:          100% (25/25)
+Correct recommendation:      100% (33/33)
+Match exactness:             100% (33/33)
+Requirement classification:  100% (33/33)
+Evidence grounding:          100% (33/33)
+Batch ranking order:         100% (1/1)
 Evidence hallucination:        0 fabricated items kept
-
-LLM tier (real Bedrock extraction, Nova Micro, 2026-09-07)
-Skill recall / precision:  100% / 100%
-Years extraction:          100% (25/25)
-Requirement classification:  96% (24/25)
-Recommendation correctness: 100% (25/25)
-Evidence hallucination:       0%  ← critical target, met in every run
-Tool invocation:            100% (3/3 agent loops, all 5 tools)
 ```
 
-The eval suite ([`tests/evals/`](tests/evals/)) covers 25 cases in 8
-categories: strong/weak match, missing required/preferred skills,
-junior-vs-senior experience gates, ambiguous requirements, skill
-aliases, irrelevant experience. Cases include **hallucination probes**
-— plausible-but-absent resume claims that the evidence validator must
-drop.
+The eval suite ([`tests/evals/`](tests/evals/)) covers 33 cases: the 8
+original categories (strong/weak match, missing required/preferred
+skills, junior-vs-senior experience gates, ambiguous requirements,
+skill aliases, irrelevant experience) plus regression cases for URL
+ingestion, alias coverage (`cicd`/`cpp`), the optimized single-shot
+pipeline, a model-switch guard, fabricated evidence and batch ranking.
+Cases include **hallucination probes** — plausible-but-absent resume
+claims that the evidence validator must drop.
 
 Two tiers, deliberately separated for cost:
 
 - `make test` and `make eval` **never call Bedrock** — the
   deterministic tier runs free in CI, and the dataset integrity plus
   the full deterministic tier are part of the normal test suite.
-- `make eval-llm` makes real model calls (~50 on Nova Micro) and must
+- `make eval-llm` makes real model calls (~70 on Nova Micro) and must
   be run explicitly.
 
 Only metrics actually executed are reported (`dist/evals/report.md`,
-timestamped). Across repeated executions at temperature 0.2 we observe
-run-to-run variance: recommendation correctness 84–92%, requirement
-classification 68–88%, while **fabricated evidence remained 0 in every
-execution**. With the three-call tool-less pipeline (Día 2) the last
-execution measured 100% recall/precision, 96% classification and 100%
-recommendations — still the residual failure mode is ambiguous
-requirements (see Limitations).
+timestamped). The LLM tier last executed on the 25-case dataset at
+temperature 0.2 measured 100% recall/precision, 96% requirement
+classification, 100% recommendations, 0 entity fabrications and 100%
+tool invocation (see [docs/MODEL_BENCHMARK.md](docs/MODEL_BENCHMARK.md)).
+The Day 9 re-run of the LLM tier against the expanded 33-case dataset
+was attempted but could not complete: Amazon Bedrock was degraded that
+window (per-call responses of 60+s, the documented transient service
+variance), so those metrics are **NOT RUN rather than fabricated**. The
+deterministic assertions for the 8 new regression cases are green.
+Registry and category coverage are continuously enforced by
+`tests/test_evals.py`.
 
 A model comparison (Nova Micro vs Nova Lite — latency, quality, cost)
 with the measured data and the decision to keep Micro lives in

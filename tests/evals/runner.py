@@ -32,6 +32,7 @@ from app.matching import (
     validate_evidence,
 )
 from app.policy import decide_recommendation
+from app.quick_rank import rank_jobs
 from app.schemas import CandidateProfile, JobRequirements
 
 EVALS_DIR = Path(__file__).resolve().parent
@@ -48,6 +49,11 @@ CATEGORIES = (
     "ambiguous_requirement",
     "skill_alias",
     "irrelevant_experience",
+    "url_ingestion",
+    "pipeline_regression",
+    "model_switch",
+    "fabricated_evidence",
+    "batch_ranking",
 )
 
 EXPECTED_TOOLS = (
@@ -147,6 +153,32 @@ def _pct(passed: int, total: int) -> float:
     return round(100.0 * passed / total, 1) if total else 0.0
 
 
+def check_case_quick_rank(case: dict) -> tuple[int, list[str]]:
+    """Batch-ranking regression (Day 8): the cheap deterministic ranker.
+
+    Runs only when the case carries a ``quick_rank`` spec; the resume
+    profile comes from the case's gold so no LLM is involved.
+    """
+    spec = case.get("quick_rank")
+    if not spec:
+        return 1, []
+    profile = CandidateProfile(**case["gold"]["profile"])
+    jobs = [
+        {
+            "url": f"https://eval.test/{index}",
+            "title": item.get("title") or f"Job {index + 1}",
+            "description": item["description"],
+        }
+        for index, item in enumerate(spec["jobs"])
+    ]
+    result = rank_jobs(profile, jobs)
+    got = [row.title for row in result.jobs if not row.error]
+    expected = list(spec["expected_order"])
+    if got != expected:
+        return 0, [f"quick_rank order: {got} != {expected}"]
+    return 1, []
+
+
 def run_deterministic(cases: list[dict] | None = None) -> dict:
     cases = cases if cases is not None else load_cases()
     checks = [check_case_deterministic(case) for case in cases]
@@ -162,6 +194,17 @@ def run_deterministic(cases: list[dict] | None = None) -> dict:
         bucket["recommendation_correct"] += int(check.recommendation_correct)
         bucket["match_exact"] += int(check.match_exact)
 
+    quick_ok = 0
+    quick_total = 0
+    quick_failures: list[str] = []
+    for case in cases:
+        if "quick_rank" not in case:
+            continue
+        ok, failures = check_case_quick_rank(case)
+        quick_total += 1
+        quick_ok += ok
+        quick_failures.extend(failures)
+
     return {
         "tier": "deterministic",
         "cases": total,
@@ -170,6 +213,9 @@ def run_deterministic(cases: list[dict] | None = None) -> dict:
         "classification_exact": sum(c.classification_exact for c in checks),
         "evidence_grounded": sum(c.evidence_grounded for c in checks),
         "hallucinated_evidence_kept": sum(c.probes_kept for c in checks),
+        "quick_rank_correct": quick_ok,
+        "quick_rank_total": quick_total,
+        "quick_rank_failures": quick_failures,
         "by_category": by_category,
         "checks": checks,
     }
@@ -361,6 +407,10 @@ def build_report(det: dict, llm: dict | None, llm_status: str) -> str:
         f"{'Evidence hallucination':<28}"
         f"{det['hallucinated_evidence_kept']:>5} kept fabricated items (target: 0)"
     )
+    if det["quick_rank_total"]:
+        lines.append(
+            _line("Batch ranking order:", det["quick_rank_correct"], det["quick_rank_total"])
+        )
     lines.append("")
 
     lines.append("Per-category (cases / recommendation / exact match)")
@@ -374,6 +424,7 @@ def build_report(det: dict, llm: dict | None, llm_status: str) -> str:
     lines.append("")
 
     failures = [f for check in det["checks"] for f in check.failures]
+    failures.extend(det["quick_rank_failures"])
     lines.append("Deterministic failures: " + ("none" if not failures else str(len(failures))))
     for failure in failures:
         lines.append(f"  - {failure}")
@@ -463,6 +514,7 @@ def main(argv: list[str] | None = None) -> int:
         and det["classification_exact"] == det["cases"]
         and det["evidence_grounded"] == det["cases"]
         and det["hallucinated_evidence_kept"] == 0
+        and det["quick_rank_correct"] == det["quick_rank_total"]
     )
 
     llm: dict | None = None

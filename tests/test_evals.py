@@ -5,6 +5,7 @@ from tests.evals.runner import (
     CATEGORIES,
     build_report,
     check_case_deterministic,
+    check_case_quick_rank,
     create_parser,
     load_cases,
     run_deterministic,
@@ -14,13 +15,27 @@ CASES = load_cases()
 CASE_IDS = [case["case_id"] for case in CASES]
 
 
-def test_dataset_covers_all_categories_with_25_cases():
-    assert len(CASES) == 25
+def test_dataset_covers_all_categories_with_33_cases():
+    assert len(CASES) == 33
     assert {case["category"] for case in CASES} == set(CATEGORIES)
     per_category: dict[str, int] = {}
     for case in CASES:
         per_category[case["category"]] = per_category.get(case["category"], 0) + 1
-    assert all(count >= 3 for count in per_category.values())
+    # Core categories keep >= 3 cases; Day 9 regression categories are
+    # single-case guards and are allowed to have fewer.
+    core = {
+        "strong_match",
+        "weak_match",
+        "missing_required",
+        "missing_preferred",
+        "junior_vs_senior",
+        "ambiguous_requirement",
+        "skill_alias",
+        "irrelevant_experience",
+    }
+    for category, count in per_category.items():
+        minimum = 3 if category in core else 1
+        assert count >= minimum, category
 
 
 def test_case_ids_are_unique():
@@ -57,20 +72,31 @@ def test_deterministic_pipeline_matches_gold(case):
     assert not check.failures, f"{case['case_id']}: {check.failures}"
 
 
+BATCH_CASES = [case for case in CASES if "quick_rank" in case]
+
+
+@pytest.mark.parametrize("case", BATCH_CASES, ids=[c["case_id"] for c in BATCH_CASES])
+def test_quick_rank_cases_match_expected_order(case):
+    ok, failures = check_case_quick_rank(case)
+    assert ok, f"{case['case_id']}: {failures}"
+
+
 def test_deterministic_tier_meets_targets():
     metrics = run_deterministic()
-    assert metrics["cases"] == 25
-    assert metrics["recommendation_correct"] == 25
-    assert metrics["match_exact"] == 25
-    assert metrics["classification_exact"] == 25
-    assert metrics["evidence_grounded"] == 25
+    assert metrics["cases"] == len(CASES)
+    assert metrics["recommendation_correct"] == len(CASES)
+    assert metrics["match_exact"] == len(CASES)
+    assert metrics["classification_exact"] == len(CASES)
+    assert metrics["evidence_grounded"] == len(CASES)
     assert metrics["hallucinated_evidence_kept"] == 0
+    assert metrics["quick_rank_total"] == len(BATCH_CASES)
+    assert metrics["quick_rank_correct"] == metrics["quick_rank_total"]
 
 
 def test_report_marks_unexecuted_llm_tier_as_not_run():
     det = run_deterministic()
     report = build_report(det, None, "no AWS credentials available (test)")
-    assert "Cases: 25" in report
+    assert f"Cases: {len(CASES)}" in report
     assert "NOT RUN" in report
     assert "Evidence hallucination" in report
 

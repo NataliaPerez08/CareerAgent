@@ -680,4 +680,10 @@ Día 7  AgentCore session/warm-path       DONE (--warm-path probe: no significan
                                              → session reuse STOPPED; docs/MODEL_BENCHMARK.md)
 Día 8  Batch ranking MVP                 DONE (POST /api/v1/batch/quick-ranking: deterministic
                                              rank of up to 10 job URLs, clickable rows → deep analysis)
+Día 9  Regression Evals                  DONE-DETERMINISTIC (33 cases: +8 regresión — URL
+                                             ingestion, ci/cd+cpp aliases, pipeline single-shot,
+                                             model-switch guard, fabricated evidence, batch ranking)
+                                             → `make eval` verde 33/33. `make eval-llm`: intentado,
+                                             Bedrock degradado (calls 60s+), métricas NO ejecutadas
+                                             → reportadas como NOT RUN, no fabricadas. Re-run pendiente.
 ```
