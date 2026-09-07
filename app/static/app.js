@@ -1,7 +1,18 @@
-const API_TEXT = "/api/v1/evaluations";
-const API_UPLOAD = "/api/v1/evaluations/upload";
+const API_TEXT_STREAM = "/api/v1/evaluations/stream";
+const API_UPLOAD_STREAM = "/api/v1/evaluations/upload/stream";
 const API_JOB_FETCH = "/api/v1/jobs/fetch";
 const MIN_LENGTH = 20;
+
+// Canonical stage name -> label shown in the progress list (order matters).
+const STAGES = [
+  ["resume_parse", "Reading resume file"],
+  ["profile_extraction", "Analyzing resume"],
+  ["requirements_extraction", "Extracting requirements"],
+  ["deterministic_matching", "Matching skills"],
+  ["recommendation", "Applying recommendation rules"],
+  ["plan_and_explanation", "Preparing recommendation"],
+  ["persistence", "Saving evaluation"],
+];
 
 const EXAMPLE_RESUME = `Junior Backend Developer
 
@@ -139,16 +150,75 @@ function showError(message) {
 function startStatus() {
   const started = Date.now();
   statusBox.hidden = false;
-  statusText.textContent = "Analyzing…";
+  updateStatusText("Starting…");
+  resetStages();
+  initStageLines();
   timer = setInterval(() => {
-    statusText.textContent = `Analyzing… ${Math.round((Date.now() - started) / 1000)}s`;
+    updateStatusText(`Working… ${Math.round((Date.now() - started) / 1000)}s`);
   }, 1000);
+}
+
+function updateStatusText(text) {
+  statusText.textContent = text;
+}
+
+function resetStages() {
+  const list = el("stage-list");
+  clearNode(list);
+  currentStageNode = null;
+}
+
+let currentStageNode = null;
+
+function initStageLines() {
+  const list = el("stage-list");
+  STAGES.forEach(([stage, label]) => {
+    const li = document.createElement("li");
+    li.className = "stage pending";
+    li.dataset.stage = stage;
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    const text = document.createElement("span");
+    text.textContent = label;
+    li.append(dot, text);
+    list.appendChild(li);
+  });
+}
+
+function setStage(stage) {
+  const list = el("stage-list");
+  let li = list.querySelector(`[data-stage="${stage}"]`);
+  if (!li) {
+    const entry = STAGES.find(([name]) => name === stage);
+    li = document.createElement("li");
+    li.className = "stage pending";
+    li.dataset.stage = stage;
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    const text = document.createElement("span");
+    text.textContent = entry ? entry[1] : stage;
+    li.append(dot, text);
+    list.appendChild(li);
+  }
+  if (currentStageNode && currentStageNode !== li) {
+    currentStageNode.classList.remove("active");
+    currentStageNode.classList.add("done");
+  }
+  li.classList.remove("pending", "done");
+  li.classList.add("active");
+  currentStageNode = li;
+  const label = li.querySelector("span:last-child");
+  updateStatusText(label ? label.textContent + "…" : "Working…");
 }
 
 function stopStatus() {
   clearInterval(timer);
   timer = null;
-  statusBox.hidden = true;
+  const list = el("stage-list");
+  if (currentStageNode) {
+    currentStageNode.classList.remove("active");
+    currentStageNode.classList.add("done");
+  }
 }
 
 function clientError() {
@@ -180,23 +250,45 @@ function formatApiError(payload, statusCode) {
   return `Request failed (HTTP ${statusCode}).`;
 }
 
-async function callApi() {
-  if (uploadMode) {
-    const form = new FormData();
-    form.append("resume", resumeFile.files[0]);
-    form.append("job_description", jobDescription.value);
-    const response = await fetch(API_UPLOAD, { method: "POST", body: form });
-    return { response, data: await response.json().catch(() => null) };
+async function consumeStream(response) {
+  const decoder = new TextDecoder();
+  const reader = response.body.getReader();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let separator;
+    while ((separator = buffer.indexOf("\n\n")) !== -1) {
+      const raw = buffer.slice(0, separator);
+      buffer = buffer.slice(separator + 2);
+      const parsed = parseEvent(raw);
+      if (!parsed) continue;
+      if (parsed.type === "stage") {
+        setStage(parsed.data);
+      } else if (parsed.type === "result") {
+        renderResult(JSON.parse(parsed.data));
+        return { ok: true };
+      } else if (parsed.type === "error") {
+        const payload = JSON.parse(parsed.data);
+        showError(formatApiError(payload, payload.status_code));
+        return { ok: false };
+      }
+    }
   }
-  const response = await fetch(API_TEXT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      resume_text: resumeText.value,
-      job_description: jobDescription.value,
-    }),
-  });
-  return { response, data: await response.json().catch(() => null) };
+  showError("The analysis ended without a result. Please try again.");
+  return { ok: false };
+}
+
+function parseEvent(raw) {
+  let type = null;
+  let data = null;
+  for (const line of raw.split("\n")) {
+    if (line.startsWith("event:")) type = line.slice(6).trim();
+    else if (line.startsWith("data:")) data = line.slice(5).trim();
+  }
+  if (type && data !== null) return { type, data };
+  return null;
 }
 
 function chip(parent, text) {
@@ -358,16 +450,33 @@ analyzeBtn.addEventListener("click", async () => {
   startStatus();
 
   try {
-    const { response, data } = await callApi();
-    if (!response.ok) {
-      showError(formatApiError(data, response.status));
+    let response;
+    if (uploadMode) {
+      const form = new FormData();
+      form.append("resume", resumeFile.files[0]);
+      form.append("job_description", jobDescription.value);
+      response = await fetch(API_UPLOAD_STREAM, { method: "POST", body: form });
     } else {
-      renderResult(data);
+      response = await fetch(API_TEXT_STREAM, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resume_text: resumeText.value,
+          job_description: jobDescription.value,
+        }),
+      });
     }
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      showError(formatApiError(data, response.status));
+      return;
+    }
+    await consumeStream(response);
   } catch {
     showError("Could not reach the CareerAgent server. Is it still running?");
   } finally {
     stopStatus();
+    statusBox.hidden = true;
     analyzeBtn.disabled = false;
   }
 });

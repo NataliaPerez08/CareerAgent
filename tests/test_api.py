@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app.db import get_session
 from app.main import app
 from app.models import Base
+from app.resume_parser import ResumeTooLargeError
 from app.schemas import EvaluationResult
 from tests.pdfgen import make_pdf
 
@@ -80,6 +81,127 @@ def test_openapi_documents_api():
     assert "/api/v1/evaluations" in paths
     assert "/api/v1/evaluations/upload" in paths
     assert "/api/v1/evaluations/{evaluation_id}" in paths
+    assert "/api/v1/evaluations/stream" in paths
+    assert "/api/v1/evaluations/upload/stream" in paths
+
+
+def _parse_sse(text: str):
+    """Parse the SSE body into [(event, data_json_str), ...]."""
+    events = []
+    for block in text.split("\n\n"):
+        if not block.strip():
+            continue
+        event_type = None
+        data = None
+        for line in block.split("\n"):
+            if line.startswith("event:"):
+                event_type = line[6:].strip()
+            elif line.startswith("data:"):
+                data = line[5:].strip()
+        if event_type and data is not None:
+            events.append((event_type, data))
+    return events
+
+
+def test_stream_emits_progress_stages_then_result(monkeypatch):
+    def fake(resume_text, job_description, timings=None, on_stage=None):
+        for stage in (
+            "profile_extraction",
+            "requirements_extraction",
+            "deterministic_matching",
+            "recommendation",
+            "plan_and_explanation",
+        ):
+            on_stage(stage)
+        return fake_result()
+
+    monkeypatch.setattr("app.main.evaluate_candidate", fake)
+
+    response = client.post(
+        "/api/v1/evaluations/stream",
+        json={"resume_text": RESUME_TEXT, "job_description": JOB_DESCRIPTION},
+    )
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+
+    events = _parse_sse(response.text)
+    stages = [json.loads(data) for event, data in events if event == "stage"]
+    assert stages == [
+        "profile_extraction",
+        "requirements_extraction",
+        "deterministic_matching",
+        "recommendation",
+        "plan_and_explanation",
+        "persistence",
+    ]
+
+    result_event = next((data for event, data in events if event == "result"), None)
+    assert result_event is not None
+    payload = json.loads(result_event)
+    assert payload["recommendation"] == "APPLY"
+    assert payload["score"] == 100
+    assert payload["matched_skills"] == ["docker", "postgresql", "python", "rest api"]
+
+
+def test_stream_reports_error_event_on_model_failure(monkeypatch):
+    def failing(resume_text, job_description, timings=None, on_stage=None):
+        raise RuntimeError("model unavailable")
+
+    monkeypatch.setattr("app.main.evaluate_candidate", failing)
+    response = client.post(
+        "/api/v1/evaluations/stream",
+        json={"resume_text": RESUME_TEXT, "job_description": JOB_DESCRIPTION},
+    )
+    assert response.status_code == 200
+    error_event = next((data for event, data in _parse_sse(response.text) if event == "error"), None)
+    assert error_event is not None
+    assert json.loads(error_event)["status_code"] == 502
+
+
+def test_stream_reports_model_timeout(monkeypatch):
+    def timing_out(resume_text, job_description, timings=None, on_stage=None):
+        raise TimeoutError("read timed out")
+
+    monkeypatch.setattr("app.main.evaluate_candidate", timing_out)
+    response = client.post(
+        "/api/v1/evaluations/stream",
+        json={"resume_text": RESUME_TEXT, "job_description": JOB_DESCRIPTION},
+    )
+    error_event = next((data for event, data in _parse_sse(response.text) if event == "error"))
+    assert json.loads(error_event)["status_code"] == 504
+
+
+def test_stream_upload_emits_resume_parse_stage(monkeypatch):
+    def fake(resume_text, filename, job_description, timings=None, on_stage=None):
+        on_stage("resume_parse")
+        return fake_result()
+
+    monkeypatch.setattr("app.main.evaluate_resume_file", fake)
+    response = client.post(
+        "/api/v1/evaluations/upload/stream",
+        files={"resume": ("resume.txt", b"Backend developer 2 years Python SQL.", "text/plain")},
+        data={"job_description": JOB_DESCRIPTION},
+    )
+    assert response.status_code == 200
+    events = _parse_sse(response.text)
+    stages = [json.loads(data) for event, data in events if event == "stage"]
+    assert "resume_parse" in stages
+    assert stages.index("resume_parse") < len(stages)
+    assert any(event == "result" for event, _ in events)
+
+
+def test_stream_upload_reports_oversized_file_error(monkeypatch):
+    def failing(resume_text, filename, job_description, timings=None, on_stage=None):
+        raise ResumeTooLargeError("resume too large")
+
+    monkeypatch.setattr("app.main.evaluate_resume_file", failing)
+    response = client.post(
+        "/api/v1/evaluations/upload/stream",
+        files={"resume": ("resume.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        data={"job_description": JOB_DESCRIPTION},
+    )
+    error_event = next((data for event, data in _parse_sse(response.text) if event == "error"))
+    assert json.loads(error_event)["status_code"] == 413
 
 
 def test_create_evaluation_returns_structured_result(monkeypatch):

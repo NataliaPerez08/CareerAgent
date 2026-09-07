@@ -54,12 +54,15 @@
 
     <div class="analyze-row">
       <button type="button" id="analyze" class="analyze">Analyze</button>
-      <p class="hint">Takes ~30–60 seconds. Every result is backed by evidence from your resume.</p>
+      <p class="hint">Takes ~20–60 seconds. You can watch each step as the agent works.</p>
     </div>
 
     <div id="status" class="status" hidden>
-      <span class="spinner" aria-hidden="true"></span>
-      <span id="status-text">Analyzing…</span>
+      <div class="status-head">
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="status-text">Starting…</span>
+      </div>
+      <ol id="stage-list" class="stages"></ol>
     </div>
 
     <div id="error" class="error" hidden></div>

@@ -117,6 +117,21 @@ def test_extract_job_requirements_returns_structured(monkeypatch):
     assert requirements.min_years_experience == 1
 
 
+def test_evaluate_candidate_reports_stage_progress(monkeypatch):
+    monkeypatch.setattr(service, "build_pipeline_agent", lambda: FakeAgent())
+
+    stages = []
+    service.evaluate_candidate(RESUME, JOB, on_stage=stages.append)
+
+    assert stages == [
+        "profile_extraction",
+        "requirements_extraction",
+        "deterministic_matching",
+        "recommendation",
+        "plan_and_explanation",
+    ]
+
+
 def test_evaluate_candidate_composes_structured_result(monkeypatch):
     monkeypatch.setattr(service, "build_pipeline_agent", lambda: FakeAgent())
 
@@ -475,7 +490,7 @@ def test_evaluate_resume_file_parses_then_evaluates(monkeypatch):
 
     captured = {}
 
-    def fake_evaluate(resume, job_description, timings=None):
+    def fake_evaluate(resume, job_description, timings=None, on_stage=None):
         captured["resume"] = resume
         captured["job"] = job_description
         return EvaluationResult(recommendation="APPLY", score=100)

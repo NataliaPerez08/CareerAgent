@@ -157,12 +157,53 @@ input[type="file"] {
 
 .status {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
   justify-content: center;
   margin: 22px 0;
   color: var(--muted);
 }
+
+.status-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  min-width: 260px;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.stage .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+.stage.pending .dot { background: transparent; }
+.stage.active { color: var(--text); }
+.stage.active .dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  animation: pulse 1s ease-in-out infinite;
+}
+.stage.done { color: var(--muted); }
+.stage.done .dot { background: var(--good); border-color: var(--good); }
+@keyframes pulse { 50% { opacity: 0.45; } }
 
 .spinner {
   width: 20px;

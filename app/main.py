@@ -11,20 +11,23 @@ after the (expensive) agent run succeeded, the result is still returned
 without an id and the failure is logged.
 """
 
+import json
 import logging
+import queue
+import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app import job_ingestion
-from app.db import get_session, run_migrations
+from app.db import get_session, get_session_factory, run_migrations
 from app.repository import (
     get_evaluation,
     list_evaluations,
@@ -39,7 +42,7 @@ from app.resume_parser import (
     parse_resume,
 )
 from app.schemas import EvaluationResult
-from app.service import evaluate_candidate
+from app.service import evaluate_candidate, evaluate_resume_file
 from app.timing import EvaluationTimings
 
 logger = logging.getLogger(__name__)
@@ -111,7 +114,18 @@ SESSION = Depends(get_session)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Return 502 for any unexpected failure (model, network, runtime)."""
+    """Return 502 for any unexpected failure (model, network, runtime).
+
+    Timeout-like failures (Bedrock deadlines, read timeouts) get 504 with a
+    clear message so the UI can tell the user the model timed out instead of
+    a generic failure.
+    """
+    if _is_model_timeout(exc):
+        logger.warning("Model timeout while processing %s %s", request.method, request.url.path)
+        return JSONResponse(
+            status_code=504,
+            content={"detail": "The AI model timed out. Please try again."},
+        )
     logger.exception("Unhandled error while processing %s %s", request.method, request.url.path)
     return JSONResponse(status_code=502, content={"detail": "Agent execution failed."})
 
@@ -229,6 +243,165 @@ def create_evaluation(
     timings.stop("request_total")
     timings.log(event="api_evaluation_timings", job_title=response.job_title)
     return response
+
+
+def _is_model_timeout(exc: Exception) -> bool:
+    name = type(exc).__name__.lower()
+    message = str(exc).lower()
+    return "timeout" in name or "timed out" in message or "deadline" in message
+
+
+def _sse(event: str, data: object) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+def _stream_events(
+    resume_text: str,
+    job_description: str,
+    *,
+    filename: str | None = None,
+):
+    """Yield SSE events: one per pipeline stage, then ``result`` or ``error``.
+
+    The pipeline runs in a worker thread so the synchronous service calls
+    never block the event loop; the generator only drains a thread-safe
+    queue. Progress reflects the real stages (no fake timers).
+    """
+    events: queue.Queue[dict | None] = queue.Queue()
+
+    def queue_stage(stage: str) -> None:
+        events.put({"type": "stage", "stage": stage})
+
+    def run() -> None:
+        timings = EvaluationTimings()
+        timings.start("request_total")
+        try:
+            if filename is None:
+                result = evaluate_candidate(
+                    resume_text,
+                    job_description,
+                    timings=timings,
+                    on_stage=queue_stage,
+                )
+            else:
+                try:
+                    result = evaluate_resume_file(
+                        resume_text,
+                        filename,
+                        job_description,
+                        timings=timings,
+                        on_stage=queue_stage,
+                    )
+                except ResumeTooLargeError as exc:
+                    events.put({"type": "error", "data": {"status_code": 413, "detail": str(exc)}})
+                    return
+                except UnsupportedResumeFormatError as exc:
+                    events.put({"type": "error", "data": {"status_code": 415, "detail": str(exc)}})
+                    return
+                except ResumeParseError as exc:
+                    events.put({"type": "error", "data": {"status_code": 422, "detail": str(exc)}})
+                    return
+
+            queue_stage("persistence")
+            timings.start("persistence")
+            try:
+                with get_session_factory()() as session:
+                    response = _persist(
+                        session,
+                        resume_text=resume_text,
+                        job_description=job_description,
+                        result=result,
+                        filename=filename,
+                        timings=timings,
+                    )
+            finally:
+                timings.stop_if_started("persistence")
+            timings.stop("request_total")
+            timings.log(
+                event="api_evaluation_stream_timings",
+                job_title=response.job_title,
+            )
+            events.put({"type": "result", "data": response.model_dump(mode="json")})
+        except HTTPException as exc:
+            events.put({"type": "error", "data": {"status_code": exc.status_code, "detail": exc.detail}})
+        except Exception as exc:
+            if _is_model_timeout(exc):
+                events.put(
+                    {
+                        "type": "error",
+                        "data": {"status_code": 504, "detail": "The AI model timed out. Please try again."},
+                    }
+                )
+            else:
+                logger.exception("Streaming evaluation failed")
+                events.put(
+                    {
+                        "type": "error",
+                        "data": {"status_code": 502, "detail": "Agent execution failed. Please try again."},
+                    }
+                )
+        finally:
+            events.put(None)
+
+    threading.Thread(target=run, daemon=True).start()
+    while True:
+        event = events.get()
+        if event is None:
+            break
+        if event["type"] == "stage":
+            yield _sse("stage", event["stage"])
+        elif event["type"] == "result":
+            yield _sse("result", event["data"])
+        elif event["type"] == "error":
+            yield _sse("error", event["data"])
+
+
+@app.post(
+    f"{API_V1}/evaluations/stream",
+    tags=["evaluations"],
+    summary="Evaluate a resume with live streaming progress (SSE)",
+)
+def create_evaluation_stream(request: EvaluationRequest) -> StreamingResponse:
+    """Same pipeline as POST /evaluations, but the response is a
+    text/event-stream: one ``stage`` event per pipeline step followed by a
+    final ``result`` (or ``error``) event."""
+    logger.info(
+        "Evaluation stream requested (resume: %d chars, job: %d chars)",
+        len(request.resume_text),
+        len(request.job_description),
+    )
+    return StreamingResponse(
+        _stream_events(request.resume_text, request.job_description),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.post(
+    f"{API_V1}/evaluations/upload/stream",
+    tags=["evaluations"],
+    summary="Evaluate an uploaded file with live streaming progress (SSE)",
+)
+async def create_evaluation_upload_stream(
+    resume: UploadFile = RESUME_FILE,
+    job_description: str = JOB_DESCRIPTION_FORM,
+) -> StreamingResponse:
+    """Stream variant of POST /evaluations/upload."""
+    try:
+        data = await resume.read(max_resume_size_bytes() + 1)
+    except Exception as exc:
+        logger.exception("Failed to read uploaded resume")
+        raise HTTPException(
+            status_code=400,
+            detail="Could not read the uploaded resume file.",
+        ) from exc
+    filename = resume.filename or "resume"
+    logger.info("Evaluation stream requested (upload: %s)", filename)
+    return StreamingResponse(
+        _stream_events(data, job_description, filename=filename),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post(

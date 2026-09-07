@@ -32,6 +32,7 @@ prompts.
 """
 
 import logging
+from collections.abc import Callable
 
 from strands import Agent
 
@@ -67,6 +68,11 @@ logger = logging.getLogger(__name__)
 
 def _stage_stopped(name: str, timings: EvaluationTimings) -> None:
     logger.info("Evaluation stage complete: %s (%.2fs)", name, timings.get_ms(name) / 1000.0)
+
+
+def _notify(on_stage, name: str) -> None:
+    if on_stage is not None:
+        on_stage(name)
 
 
 PROFILE_EXTRACTION_PROMPT = """Extract the candidate profile from the resume below.
@@ -288,6 +294,7 @@ def evaluate_candidate(
     resume: str,
     job_description: str,
     timings: EvaluationTimings | None = None,
+    on_stage: Callable[[str], None] | None = None,
 ) -> EvaluationResult:
     """Run the full structured evaluation pipeline.
 
@@ -295,27 +302,35 @@ def evaluate_candidate(
     owns it is responsible for logging the summary. When absent, the
     service creates one internally and logs a single structured JSON line
     (used by CLI and any direct callers).
+
+    ``on_stage`` is invoked with the canonical stage name each time a stage
+    starts, so callers can stream live progress to a user (see the SSE
+    endpoint in app/main.py).
     """
     owned = timings is None
     timings = timings or EvaluationTimings()
 
     timings.start("profile_extraction")
+    _notify(on_stage, "profile_extraction")
     profile = extract_candidate_profile(resume, timings)
     timings.stop("profile_extraction")
     _stage_stopped("profile_extraction", timings)
 
     timings.start("requirements_extraction")
+    _notify(on_stage, "requirements_extraction")
     requirements = extract_job_requirements(job_description, timings)
     timings.stop("requirements_extraction")
     _stage_stopped("requirements_extraction", timings)
 
     timings.start("deterministic_matching")
+    _notify(on_stage, "deterministic_matching")
     requirements = normalize_requirements(requirements)
 
     match = build_match_result(profile, requirements)
     strengths = build_strengths(match, profile, requirements)
     gaps = build_skill_gaps(match)
     timings.start("recommendation")
+    _notify(on_stage, "recommendation")
     recommendation = decide_recommendation(match, DEFAULT_POLICY)
     timings.stop("recommendation")
     timings.stop("deterministic_matching")
@@ -325,6 +340,7 @@ def evaluate_candidate(
     # Everything deterministic is already computed above, so the model has
     # nothing left to calculate and no reason to loop.
     timings.start("plan_and_explanation")
+    _notify(on_stage, "plan_and_explanation")
     plan = draft_career_plan(
         profile,
         requirements,
@@ -372,14 +388,21 @@ def evaluate_resume_file(
     filename: str,
     job_description: str,
     timings: EvaluationTimings | None = None,
+    on_stage: Callable[[str], None] | None = None,
 ) -> EvaluationResult:
     """Parse a resume file (PDF/TXT) and run the evaluation pipeline."""
     owned = timings is None
     timings = timings or EvaluationTimings()
     timings.start("resume_parse")
+    _notify(on_stage, "resume_parse")
     resume_text = parse_resume(resume_file, filename)
     timings.stop("resume_parse")
-    result = evaluate_candidate(resume_text, job_description, timings=timings)
+    result = evaluate_candidate(
+        resume_text,
+        job_description,
+        timings=timings,
+        on_stage=on_stage,
+    )
     if owned:
         timings.log(
             event="evaluation_pipeline_timings",

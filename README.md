@@ -153,6 +153,11 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
   (`POST /api/v1/jobs/fetch`): best-effort extraction of title, company
   and description from page metadata, with graceful fallback to manual
   paste when a page blocks automated reads
+- **Live progress while analyzing** (`POST /api/v1/evaluations/stream`,
+  SSE): the UI shows each real pipeline stage as it happens — reading
+  resume, extracting requirements, matching skills, preparing the
+  recommendation, saving — instead of a dead spinner; model timeouts
+  are reported explicitly as 504
 - Structured `EvaluationResult` contract across CLI, API and UI
 - Skill **normalization**: aliases (`postgres` → `postgresql`,
   `cicd` → `ci/cd`, `cpp` → `c++`, `rest api development` →
