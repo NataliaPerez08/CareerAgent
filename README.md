@@ -55,6 +55,34 @@ Evidence:         5 verbatim quotes from the resume
 Deliberately not a 100% match: the point of the product is showing
 *exactly* what you're missing and how to close it — not cheerleading.
 
+## Screenshots
+
+Hand-drawn Y2K desktop UI (captured from a live run against Bedrock):
+
+![Landing — desktop with the three input windows](docs/screenshots/01_landing.png)
+
+*The desktop: resume window, job window and the optional batch-ranking
+window, plus the OS taskbar.*
+
+![Inputs loaded via Load example](docs/screenshots/02_loaded_inputs.png)
+
+*One click on **Load example** fills both windows with the demo CV and
+job posting.*
+
+![Result: APPLY 80 with evidence](docs/screenshots/03_result.png)
+
+*Verdict window: APPLY, score ring 80, matched skills, missing required
+(`aws`) and preferred (`ci/cd`, `kubernetes`), and five verbatim
+evidence quotes.*
+
+![Skill gaps with preparation steps](docs/screenshots/04_skill_gaps.png)
+
+*Gaps grouped by severity, each with a concrete preparation plan.*
+
+![History of saved evaluations](docs/screenshots/05_history.png)
+
+*Every streamed evaluation is persisted; clicking a row reopens it.*
+
 ## How it works
 
 **LLM interprets. Code decides. Evals verify.**

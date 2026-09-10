@@ -1,107 +1,88 @@
-# Devpost Submission Draft
+# Devpost submission draft — CareerAgent
 
-Borrador para la submission. **No contiene premios, usuarios, métricas
-de negocio ni deployments inventados** — sólo lo efectivamente
-construido y verificado.
+> Paste-ready copy for the Devpost form. Replace the VIDEO link once the
+> recording is uploaded. Screenshots are already in `docs/screenshots/`.
 
 ## Project name
 
-CareerAgent
+CareerAgent — know if the job is worth your hour, before you apply
 
-## Tagline
+## Tagline (one line)
 
-Should you apply? Get an evidence-based answer, not generic advice.
+An agentic career copilot that reads your resume and a job posting, then
+tells you APPLY / MAYBE / SKIP — with verbatim evidence, skill gaps and a
+preparation plan. It never claims skills your resume doesn't prove.
 
-## Inspiration
+## Description
 
-Job descriptions are noisy. Junior candidates in particular struggle
-to tell whether they are genuinely underqualified or just missing one
-or two non-critical requirements. Generic career chatbots make this
-worse: they produce plausible-sounding advice that isn't anchored to
-the actual resume, so candidates still can't tell what they're really
-missing. We wanted an evaluator that only says what the resume can
-prove.
+### The problem
 
-## What it does
+Job postings are noisy. Requirements mix mandatory, preferred and
+wish-list items; candidates guess whether a missing bullet is fatal or
+irrelevant. Applying to a bad-fit job costs an hour of tailoring and an
+interview slot; skipping a good-fit job costs an opportunity.
 
-CareerAgent takes a resume (text or PDF) and a job description, and
-returns a structured evaluation:
+### The solution
 
-- an APPLY / MAYBE / SKIP recommendation with a match score;
-- matched skills, each backed by verbatim evidence quoted from the
-  resume (validated by code — invented evidence is dropped);
-- missing requirements split by severity (critical / required /
-  preferred) and requirements whose status the job description leaves
-  ambiguous (kept as *unknown*, never guessed);
-- a skill-gap preparation plan and concrete interview topics.
+CareerAgent evaluates a resume against a job description and returns a
+structured verdict:
 
-It is exposed as a CLI, a FastAPI service with a web UI, and an
-evaluation history persisted in PostgreSQL. The same evaluation core
-can run on AWS Bedrock AgentCore Runtime.
+- recommendation `APPLY` / `MAYBE` / `SKIP` with a 0-100 match score,
+- matched, missing-required and missing-preferred skills,
+- **evidence**: verbatim quotes from the resume for every claimed match,
+- skill gaps ranked by severity, each with a preparation plan,
+- interview topics and a study plan for the gaps.
 
-## How we built it
+The anti-hallucination contract: every matched skill must be grounded in
+a quote from the resume. A validator drops any model claim it cannot
+ground — fabricated experience is measured as 0 in the eval suite.
 
-- **Strands Agents SDK** agent on **Amazon Bedrock** with **Amazon
-  Nova Micro** (the cheapest Bedrock model) for extraction and
-  explanation.
-- A strictly deterministic core: skill normalization with an alias
-  map, requirement classification rules, match scoring, and a
-  centralized APPLY/MAYBE/SKIP policy — all in plain Python, never in
-  the LLM.
-- The agent works through five tools (job analysis, skill
-  normalization, match calculation, gap analysis, interview planning)
-  so the workflow is inspectable and each step is testable.
-- Pydantic schemas as the single evaluation contract end to end.
-- FastAPI + vanilla-JS UI + SQLAlchemy/Alembic + PostgreSQL (SQLite
-  locally by default); Docker Compose for the full stack.
-- A two-tier evaluation suite: a deterministic tier (25 gold-labeled
-  cases, runs free in CI) and an LLM tier (real Bedrock extraction,
-  run explicitly).
+### How it works
 
-**LLM interprets. Code decides. Evals verify.**
+```text
+Resume + Job
+      ↓
+Strands agent (Amazon Bedrock, Nova Micro)
+ ├── analyze_job             classify + normalize requirements
+ ├── normalize_skills        canonical names on both sides
+ ├── calculate_match         deterministic score + policy verdict
+ ├── identify_skill_gaps     severity: critical > required > preferred
+ └── generate_interview_plan validated preparation steps
+      ↓
+Structured EvaluationResult (Pydantic) → CLI / FastAPI + web UI / AgentCore
+```
 
-## Challenges we ran into
+Design rule: **the LLM interprets, the code decides.** Percentages,
+thresholds, alias normalization and the APPLY/MAYBE/SKIP policy are
+deterministic Python; the model only extracts, classifies and explains.
 
-- Nova Micro attached context words to skills ("AWS experience" ≠ a
-  new skill) and emitted variants like `cicd`/`cpp` — we fixed this in
-  a deterministic alias layer instead of upgrading the model.
-- Getting the model to stop inventing requirement statuses: the fix
-  was prompt rules ("when in doubt, unknown") plus a code-level
-  requirement classifier, not a bigger model.
-- A prompt example we added leaked into model outputs as a fake
-  requirement — the eval suite caught it and we removed it.
-- Measuring ourselves honestly: we built the eval suite *before*
-  claiming reliability numbers.
+### Built with
 
-## Accomplishments that we're proud of
+Python · Strands Agents SDK · Amazon Bedrock (Nova Micro) · FastAPI ·
+PostgreSQL/SQLite + Alembic · Docker · pytest · a hand-drawn Y2K desktop UI
 
-- **Zero fabricated evidence** in the final eval run: every evidence
-  item returned is verbatim-validated against the resume in code.
-- 25-case / 8-category eval suite with a fully reproducible
-  deterministic tier (100% on all four metrics) and a real LLM tier:
-  92% recommendation correctness with the cheapest Nova model.
-- The whole recommendation, score and severity logic is deterministic
-  and centralized — the model can't quietly change the business rules.
+### Demo
 
-## What we learned
+See `docs/DEMO.md`: load the example, click Analyze, watch the live
+stage progress, read the evidence. Core flow < 3 minutes.
+VIDEO: <link>
 
-- Small models + deterministic guardrails beat big models + trust.
-- Evals change how you prompt: once hallucination is measured, every
-  prompt edit becomes a hypothesis test.
-- Prompt examples can leak into outputs — show, don't quote.
+### Evaluation
 
-## What's next
+33-case eval suite (`make eval`, deterministic, reproducible): 100%
+recommendation correctness, 100% evidence grounding, 0 fabricated
+evidence. The LLM tier runs explicitly (`make eval-llm`) and is reported
+only when actually executed.
 
-- Post-hackathon ideas are tracked in `docs/ROADMAP.md`: job-search
-  and job-ranking agents upstream of CareerAgent, resume adaptation,
-  application tracking with human approval. None of it is claimed as
-  built.
+### Limitations (honest)
 
-## Built with
+- Model run-to-run variance at temperature 0.2.
+- Job URL loading is best-effort: JS-rendered pages, login walls and
+  anti-bot systems fall back to manual paste.
+- Bedrock transient degradation windows increase latency (documented,
+  with a 504 and a clear UI message instead of a dead spinner).
 
-Python, Strands Agents SDK, Amazon Bedrock, Amazon Nova, FastAPI,
-PostgreSQL, SQLAlchemy, Alembic, Docker, Nix, pytest.
+### Future work
 
-(AgentCore runtime support is implemented and documented; a live runtime is
-deployed and READY (v4), and remote invocation works — see
-`docs/deploy/agentcore.md`.)
+Multi-CV profiles, ATS-friendly export, longitudinal tracking of gap
+closure, richer company research.

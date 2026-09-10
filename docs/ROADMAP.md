@@ -688,4 +688,9 @@ Día 9  Regression Evals                  DONE-DETERMINISTIC (33 cases: +8 regre
                                              → reportadas como NOT RUN, no fabricadas. Re-run pendiente.
 Día 10 Demo freeze                        DONE (sin features nuevas; docs/DEMO.md: guion core < 3 min,
                                              SSE progress, history, batch ranking opcional, checklist)
+Día 11 Submission                         DONE (fix SSE stage parse — el Analyze del browser caía con
+                                             error genérico desde el Día 5; restyle hand-drawn Y2K;
+                                             5 screenshots verificados; smoke remoto PASS: runtime
+                                             career_agent READY → APPLY/80/5 evidencias en ~14 s;
+                                             README Screenshots; docs/DEVPOST.md; tag v1.0)
 ```
