@@ -35,7 +35,7 @@ RESUME_PDF = make_pdf(
 
 
 @pytest.fixture(autouse=True)
-def db_session():
+def db_session(monkeypatch):
     """Give every API test an isolated in-memory database."""
     engine = create_engine(
         "sqlite://",
@@ -50,6 +50,10 @@ def db_session():
             yield session
 
     app.dependency_overrides[get_session] = override
+    # The SSE stream persists in a worker thread via get_session_factory(),
+    # which is called directly (not as a FastAPI dependency) so it must be
+    # patched on app.main, not overridden.
+    monkeypatch.setattr("app.main.get_session_factory", lambda: factory)
     yield
     app.dependency_overrides.pop(get_session, None)
     engine.dispose()
@@ -143,6 +147,11 @@ def test_stream_emits_progress_stages_then_result(monkeypatch):
     assert payload["recommendation"] == "APPLY"
     assert payload["score"] == 100
     assert payload["matched_skills"] == ["docker", "postgresql", "python", "rest api"]
+    assert payload["id"] is not None
+    assert payload["job_title"] is not None
+
+    history = client.get("/api/v1/evaluations?limit=10").json()
+    assert any(entry["id"] == payload["id"] for entry in history)
 
 
 def test_stream_reports_error_event_on_model_failure(monkeypatch):

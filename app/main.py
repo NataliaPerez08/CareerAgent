@@ -333,7 +333,6 @@ def _stream_events(
                     return
 
             queue_stage("persistence")
-            timings.start("persistence")
             try:
                 with get_session_factory()() as session:
                     response = _persist(
