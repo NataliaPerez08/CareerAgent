@@ -1,95 +1,94 @@
 # CareerAgent Demo
 
-Escenario reproducible de demo, objetivo **< 3 minutos** para el core.
-Estado: **DEMO FREEZE (Día 10 del sprint)** — este documento y la app
-están congelados; no se agregan features nuevas a partir de aquí.
+Reproducible demo scenario, target **< 3 minutes** for the core.
+Status: **DEMO FREEZE (Day 10 of the sprint)** — this document and the
+app are frozen; no new features are added from here on.
 
-## Setup (antes de grabar)
+## Setup (before recording)
 
 ```bash
-cp .env.example .env           # ajustar AWS_REGION si hace falta
-make dev                       # o: python -m pip install -e '.[dev]'
-make run                       # abre http://127.0.0.1:8000/
+cp .env.example .env           # adjust AWS_REGION if needed
+make dev                       # or: python -m pip install -e '.[dev]'
+make run                       # opens http://127.0.0.1:8000/
 ```
 
-Requisitos: credenciales AWS con acceso a Bedrock (Nova Micro).
-Todo el material de la demo está en:
+Requirements: AWS credentials with access to Bedrock (Nova Micro).
+All the demo material is in:
 
 ```text
-examples/demo_resume.txt   CV del candidato demo
-examples/demo_job.txt      vacante demo
+examples/demo_resume.txt   demo candidate CV
+examples/demo_job.txt      demo job posting
 ```
 
-Ambos textos están también embebidos en el botón **Load example** de la
-UI, así la demo es un clic (no requiere teclear ni subir archivos).
+Both texts are also embedded in the **Load example** button in the UI,
+so the demo is one click (no typing or file uploads required).
 
-## Resultado esperado (verificado)
+## Expected result (verified)
 
 ```text
 Recommendation:  APPLY
 Score:           80  (4/5 required skills)
 Matched:         python, rest api, postgresql, docker
-Missing required: aws          ← el gap con plan de preparación
+Missing required: aws          ← the gap with a preparation plan
 Missing preferred: ci/cd, kubernetes
 Experience:      2 >= 2 years  ✓
-Evidence:        5 citas verbatim del CV
+Evidence:        5 verbatim quotes from the CV
 ```
 
-La demo es deliberadamente **no-100%**: el candidato es un fit fuerte
-con un gap concreto (AWS). Eso muestra el valor real del producto —
-evidencia, gaps y preparación, no un "todo bien".
+The demo is deliberately **not 100%**: the candidate is a strong fit
+with one concrete gap (AWS). That shows the real value of the product —
+evidence, gaps and preparation, not an "all good".
 
-## Guion (timeline) — core < 3 minutos
+## Script (timeline) — core < 3 minutes
 
 ```text
-00:00  Problema: las vacantes son ruidosas; cuesta saber si eres
-       un fit real o si te falta una sola skill no crítica.
-00:15  Abrir la UI (http://127.0.0.1:8000/) — dos inputs: CV y vacante.
-00:30  Click "Load example" (carga CV + vacante demo).
+00:00  Problem: job postings are noisy; it's hard to know if you're
+       a real fit or just missing one non-critical skill.
+00:15  Open the UI (http://127.0.0.1:8000/) — two inputs: CV and job.
+00:30  Click "Load example" (loads demo CV + job).
 00:40  Click "Analyze".
-       → la UI muestra el avance real por etapas (SSE): lectura de CV,
-         extracción de requisitos, matching determinista, preparación.
-01:20  Resultado: badge APPLY + score ring 80.
-01:40  Evidence: cada skill coincide con una cita literal del CV
-       (nada inventado).
-02:00  Skill gaps por severidad: aws (required), ci/cd y kubernetes
-       (preferred), con preparation steps.
-02:20  Interview topics + preparation plan para el gap.
-02:40  History: el resultado quedó guardado y se reabre con un clic.
-02:50  Cierre: "el LLM interpreta, el código decide, los evals lo
-       verifican".
+       → the UI shows real stage-by-stage progress (SSE): CV reading,
+         requirement extraction, deterministic matching, preparation.
+01:20  Result: APPLY badge + score ring 80.
+01:40  Evidence: each skill matches a literal quote from the CV
+       (nothing invented).
+02:00  Skill gaps by severity: aws (required), ci/cd and kubernetes
+       (preferred), with preparation steps.
+02:20  Interview topics + preparation plan for the gap.
+02:40  History: the result was saved and reopens with one click.
+02:50  Closing: "the LLM interprets, the code decides, the evals
+       verify".
 ```
 
-### Opcional si queda tiempo (30 s más)
+### Optional if time remains (30 s more)
 
 ```text
-Batch ranking: pegar 2-3 URLs de vacantes → ranking rápido determinista
-→ clic en una fila → análisis profundo de esa vacante.
+Batch ranking: paste 2-3 job URLs → quick deterministic ranking
+→ click a row → deep analysis of that job.
 ```
 
-## Freeze checklist (Día 10)
+## Freeze checklist (Day 10)
 
-- [x] No features nuevas: solo verificación y este documento
-- [x] Demo inputs verificados (`examples/demo_*` + "Load example")
-- [x] Flujo URL: "Load job" desde una URL pública (sin scraping frágil;
-      fallback a pegado manual documentado)
-- [x] SSE progress + timeout explícito (504) si el modelo se cuelga
-- [x] History: listado + reabrir evaluación guardada
-- [x] Dropdown de fallback: si Bedrock devuelve respuestas lentas
-      (degradación documentada de 60 s+), la demo se cuenta igualmente:
-      narrar arquitectura mientras el pipeline corre
+- [x] No new features: only verification and this document
+- [x] Demo inputs verified (`examples/demo_*` + "Load example")
+- [x] URL flow: "Load job" from a public URL (no fragile scraping;
+      fallback to manual paste documented)
+- [x] SSE progress + explicit timeout (504) if the model hangs
+- [x] History: listing + reopen saved evaluation
+- [x] Fallback plan: if Bedrock returns slow responses (documented
+      60 s+ degradation), the demo is narrated anyway: explain the
+      architecture while the pipeline runs
 
-## Demo alternativa por CLI (sin UI)
+## Alternative CLI demo (no UI)
 
 ```bash
-python -m app.cli                    # usa examples/demo_* por defecto → JSON estructurado
-python -m app.cli --chat             # agente Strands con el workflow de 5 tools
+python -m app.cli                    # uses examples/demo_* by default → structured JSON
+python -m app.cli --chat             # Strands agent with the 5-tool workflow
 ```
 
-## Nota sobre tiempos
+## Note on timings
 
-Una evaluación completa (3 llamadas a Nova Micro, sin tools) tarda
-~15-60 s según la región y la salud del servicio. El guardado es
-best-effort en cada request. En la demo, narrar la arquitectura mientras
-el pipeline corre (la UI muestra del progreso real por etapas, no un
-spinner muerto).
+A full evaluation (3 Nova Micro calls, no tools) takes ~15-60 s
+depending on the region and service health. Saving is best-effort on
+each request. In the demo, narrate the architecture while the pipeline
+runs (the UI shows real stage-by-stage progress, not a dead spinner).
