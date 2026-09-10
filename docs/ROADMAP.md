@@ -686,4 +686,6 @@ Día 9  Regression Evals                  DONE-DETERMINISTIC (33 cases: +8 regre
                                              → `make eval` verde 33/33. `make eval-llm`: intentado,
                                              Bedrock degradado (calls 60s+), métricas NO ejecutadas
                                              → reportadas como NOT RUN, no fabricadas. Re-run pendiente.
+Día 10 Demo freeze                        DONE (sin features nuevas; docs/DEMO.md: guion core < 3 min,
+                                             SSE progress, history, batch ranking opcional, checklist)
 ```
