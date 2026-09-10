@@ -73,6 +73,7 @@ def test_both_agents_share_the_same_model_configuration(monkeypatch):
     monkeypatch.setenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
     monkeypatch.setenv("AWS_REGION", "eu-west-1")
     monkeypatch.setenv("BEDROCK_TEMPERATURE", "0.1")
+    monkeypatch.setenv("BEDROCK_MAX_TOKENS", "2048")
 
     seen: list[dict] = []
 
@@ -87,8 +88,30 @@ def test_both_agents_share_the_same_model_configuration(monkeypatch):
     agent_module.build_pipeline_agent()
 
     assert seen == [
-        {"model_id": "amazon.nova-lite-v1:0", "region_name": "eu-west-1", "temperature": 0.1},
+        {
+            "model_id": "amazon.nova-lite-v1:0",
+            "region_name": "eu-west-1",
+            "temperature": 0.1,
+            "max_tokens": 2048,
+        },
     ] * 2
+
+
+def test_max_tokens_defaults_to_nova_micro_limit(monkeypatch):
+    """Omitting maxTokens lets Bedrock truncate long structured responses."""
+    monkeypatch.delenv("BEDROCK_MAX_TOKENS", raising=False)
+
+    seen: list[dict] = []
+    monkeypatch.setattr(
+        agent_module,
+        "BedrockModel",
+        lambda **kwargs: seen.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(agent_module, "Agent", lambda **kwargs: object())
+
+    agent_module.build_pipeline_agent()
+
+    assert seen[0]["max_tokens"] == 5120
 
 
 def test_invalid_temperature_falls_back_to_default(monkeypatch):
@@ -105,3 +128,19 @@ def test_invalid_temperature_falls_back_to_default(monkeypatch):
     agent_module.build_pipeline_agent()
 
     assert seen[0]["temperature"] == 0.2
+
+
+def test_invalid_max_tokens_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("BEDROCK_MAX_TOKENS", "not-a-number")
+
+    seen: list[dict] = []
+    monkeypatch.setattr(
+        agent_module,
+        "BedrockModel",
+        lambda **kwargs: seen.append(kwargs) or object(),
+    )
+    monkeypatch.setattr(agent_module, "Agent", lambda **kwargs: object())
+
+    agent_module.build_pipeline_agent()
+
+    assert seen[0]["max_tokens"] == 5120

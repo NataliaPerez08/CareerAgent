@@ -222,3 +222,15 @@ def test_validate_evidence_ignores_case_and_whitespace():
     assert validate_evidence(["python developer with   2 years"], resume) == [
         "python developer with   2 years"
     ]
+
+
+def test_validate_evidence_strips_wrapping_quotes():
+    """Nova Micro returns evidence items wrapped in literal quotes; they
+    must survive the verbatim check (regression: everything was dropped)."""
+    resume = "Built REST APIs with Python. Docker for deployment."
+    evidence = [
+        "'Built REST APIs with Python.'",
+        "\"Docker for deployment.\"",
+    ]
+
+    assert validate_evidence(evidence, resume) == evidence

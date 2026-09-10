@@ -68,6 +68,16 @@ const statusText = el("status-text");
 const errorBox = el("error");
 const result = el("result");
 
+// Confirmation state: each input must be explicitly confirmed before it can
+// be used by Analyze / Rank jobs. Editing an input invalidates its snapshot.
+const confirmed = { resume: null, job: null, batch: null };
+
+const CONFIRM = {
+  resume: { btn: el("confirm-resume"), note: el("resume-confirmed"), label: "Confirm resume" },
+  job: { btn: el("confirm-job"), note: el("job-confirmed"), label: "Confirm job" },
+  batch: { btn: el("confirm-batch"), note: el("batch-confirmed"), label: "Confirm batch" },
+};
+
 let uploadMode = false;
 let timer = null;
 
@@ -79,6 +89,7 @@ function switchTab(upload) {
   tabUpload.setAttribute("aria-selected", String(upload));
   panelPaste.hidden = upload;
   panelUpload.hidden = !upload;
+  invalidateConfirm("resume");
 }
 
 tabPaste.addEventListener("click", () => switchTab(false));
@@ -88,12 +99,15 @@ resumeFile.addEventListener("change", () => {
   fileName.textContent = resumeFile.files.length
     ? `Selected: ${resumeFile.files[0].name}`
     : "No file selected";
+  invalidateConfirm("resume");
 });
 
 el("load-example").addEventListener("click", () => {
   switchTab(false);
   resumeText.value = EXAMPLE_RESUME;
   jobDescription.value = EXAMPLE_JOB;
+  confirmResume();
+  confirmJob();
 });
 
 async function loadJobFromUrl(url) {
@@ -116,6 +130,7 @@ async function loadJobFromUrl(url) {
     ok = true;
     const parts = [data.title, data.company].filter(Boolean);
     jobDescription.value = [...parts, data.description].filter(Boolean).join("\n\n");
+    invalidateConfirm("job");
 
     jobSource.textContent = "";
     const link = document.createElement("a");
@@ -159,6 +174,7 @@ function showError(message) {
 function startStatus() {
   const started = Date.now();
   statusBox.hidden = false;
+  analyzeBtn.classList.add("running");
   updateStatusText("Starting…");
   resetStages();
   initStageLines();
@@ -223,6 +239,7 @@ function setStage(stage) {
 function stopStatus() {
   clearInterval(timer);
   timer = null;
+  analyzeBtn.classList.remove("running");
   const list = el("stage-list");
   if (currentStageNode) {
     currentStageNode.classList.remove("active");
@@ -230,18 +247,90 @@ function stopStatus() {
   }
 }
 
-function clientError() {
+function resumeSummary(entry) {
+  if (entry.mode === "upload") return entry.name;
+  const first = (entry.text.split("\n") || []).find((line) => line.trim());
+  return first ? `"${first.trim().slice(0, 60)}"` : `${entry.text.length} characters`;
+}
+
+function markConfirmed(key, note) {
+  const entry = CONFIRM[key];
+  entry.btn.textContent = "Confirmed";
+  entry.btn.classList.add("confirmed");
+  entry.note.textContent = `✓ ${note}`;
+  entry.note.hidden = false;
+  updateActions();
+}
+
+function invalidateConfirm(key) {
+  confirmed[key] = null;
+  const entry = CONFIRM[key];
+  entry.btn.textContent = entry.label;
+  entry.btn.classList.remove("confirmed");
+  entry.note.hidden = true;
+  updateActions();
+}
+
+function confirmResume() {
   if (uploadMode) {
     if (!resumeFile.files.length) {
-      return "Choose a resume file, or switch to “Paste text”.";
+      showError("Choose a resume file, or switch to “Paste text”, then confirm.");
+      return false;
     }
-  } else if (resumeText.value.trim().length < MIN_LENGTH) {
-    return "Your resume looks too short — paste at least a few lines (20+ characters).";
+    confirmed.resume = { mode: "upload", file: resumeFile.files[0], name: resumeFile.files[0].name };
+  } else {
+    const text = resumeText.value.trim();
+    if (text.length < MIN_LENGTH) {
+      showError("Your resume looks too short — paste at least a few lines (20+ characters), then confirm.");
+      return false;
+    }
+    confirmed.resume = { mode: "paste", text };
   }
-  if (jobDescription.value.trim().length < MIN_LENGTH) {
-    return "Paste the job description first (20+ characters).";
+  markConfirmed("resume", `Resume confirmed: ${resumeSummary(confirmed.resume)}`);
+  return true;
+}
+
+function confirmJob() {
+  const text = jobDescription.value.trim();
+  if (text.length < MIN_LENGTH) {
+    showError("Paste the job description first (20+ characters), then confirm.");
+    return false;
   }
-  return null;
+  confirmed.job = text;
+  const first = (text.split("\n") || []).find((line) => line.trim());
+  markConfirmed("job", first ? `Job confirmed: "${first.trim().slice(0, 60)}"` : "Job description confirmed");
+  return true;
+}
+
+function confirmBatch() {
+  const urls = jobUrlsMulti.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 10);
+  if (!urls.length) {
+    showError("Paste at least one job URL (one per line), then confirm.");
+    return false;
+  }
+  confirmed.batch = urls;
+  markConfirmed("batch", `${urls.length} job URL${urls.length === 1 ? "" : "s"} confirmed`);
+  return true;
+}
+
+function updateActions() {
+  const resumeOk = Boolean(confirmed.resume);
+  const jobOk = Boolean(confirmed.job);
+  const batchOk = Boolean(confirmed.resume && confirmed.resume.mode === "paste" && confirmed.batch);
+  analyzeBtn.disabled = !(resumeOk && jobOk);
+  rankJobsBtn.disabled = !batchOk;
+  const hint = el("analyze-hint");
+  if (resumeOk && jobOk) {
+    hint.textContent = "Takes ~20–60 seconds. You can watch each step as the agent works.";
+  } else if (!resumeOk) {
+    hint.textContent = "Confirm your resume first, then confirm the job description to enable Analyze.";
+  } else {
+    hint.textContent = "Confirm the job description to enable Analyze.";
+  }
 }
 
 function formatApiError(payload, statusCode) {
@@ -512,9 +601,12 @@ async function openHistory(item) {
 }
 
 analyzeBtn.addEventListener("click", async () => {
-  const problem = clientError();
-  if (problem) {
-    showError(problem);
+  if (!confirmed.resume) {
+    showError("Confirm your resume first (paste text or choose a file), then analyze.");
+    return;
+  }
+  if (!confirmed.job) {
+    showError("Confirm the job description first, then analyze.");
     return;
   }
 
@@ -525,18 +617,18 @@ analyzeBtn.addEventListener("click", async () => {
 
   try {
     let response;
-    if (uploadMode) {
+    if (confirmed.resume.mode === "upload") {
       const form = new FormData();
-      form.append("resume", resumeFile.files[0]);
-      form.append("job_description", jobDescription.value);
+      form.append("resume", confirmed.resume.file);
+      form.append("job_description", confirmed.job);
       response = await fetch(API_UPLOAD_STREAM, { method: "POST", body: form });
     } else {
       response = await fetch(API_TEXT_STREAM, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          resume_text: resumeText.value,
-          job_description: jobDescription.value,
+          resume_text: confirmed.resume.text,
+          job_description: confirmed.job,
         }),
       });
     }
@@ -552,7 +644,7 @@ analyzeBtn.addEventListener("click", async () => {
   } finally {
     stopStatus();
     statusBox.hidden = true;
-    analyzeBtn.disabled = false;
+    updateActions();
   }
 });
 
@@ -603,27 +695,22 @@ function batchRow(item, index) {
       result.hidden = true;
       jobDescription.value = "";
       const loaded = await loadJobFromUrl(item.url);
-      if (loaded) analyzeBtn.click();
+      if (loaded && confirmJob()) analyzeBtn.click();
     });
   }
   return li;
 }
 
 rankJobsBtn.addEventListener("click", async () => {
-  const urls = jobUrlsMulti.value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 10);
   batchError.hidden = true;
 
-  if (uploadMode) {
-    batchError.textContent = "Switch to the 'Paste text' resume tab to use batch ranking.";
+  if (!confirmed.resume || confirmed.resume.mode !== "paste") {
+    batchError.textContent = "Confirm your resume in the 'Paste text' tab before ranking jobs.";
     batchError.hidden = false;
     return;
   }
-  if (urls.length === 0) {
-    batchError.textContent = "Paste at least one job URL (one per line).";
+  if (!confirmed.batch) {
+    batchError.textContent = "Confirm the job URLs first, then rank.";
     batchError.hidden = false;
     return;
   }
@@ -636,7 +723,7 @@ rankJobsBtn.addEventListener("click", async () => {
     const response = await fetch(API_BATCH_RANK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_text: resumeText.value, job_urls: urls }),
+      body: JSON.stringify({ resume_text: confirmed.resume.text, job_urls: confirmed.batch }),
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) {
@@ -653,6 +740,16 @@ rankJobsBtn.addEventListener("click", async () => {
     batchError.textContent = "Could not reach the CareerAgent server. Is it still running?";
     batchError.hidden = false;
   } finally {
-    rankJobsBtn.disabled = false;
+    updateActions();
   }
 });
+
+resumeText.addEventListener("input", () => invalidateConfirm("resume"));
+jobDescription.addEventListener("input", () => invalidateConfirm("job"));
+jobUrlsMulti.addEventListener("input", () => invalidateConfirm("batch"));
+
+CONFIRM.resume.btn.addEventListener("click", confirmResume);
+CONFIRM.job.btn.addEventListener("click", confirmJob);
+CONFIRM.batch.btn.addEventListener("click", confirmBatch);
+
+updateActions();

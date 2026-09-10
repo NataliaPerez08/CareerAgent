@@ -138,16 +138,25 @@ def build_match_result(profile: CandidateProfile, requirements: JobRequirements)
     )
 
 
+def _strip_surrounding_quotes(text: str) -> str:
+    """Remove wrapping quotes models sometimes add around evidence items."""
+    stripped = text.strip()
+    while len(stripped) >= 2 and stripped[0] in "'\"" and stripped[-1] in "'\"":
+        stripped = stripped[1:-1].strip()
+    return stripped
+
+
 def validate_evidence(evidence: list[str], resume_text: str) -> list[str]:
     """Keep only evidence strings that appear verbatim in the resume.
 
-    Comparison ignores case and whitespace differences. Any evidence
-    not found in the resume is dropped: it cannot be trusted.
+    Comparison ignores case and whitespace differences, and strips
+    wrapping quotes (models often return each item as ``'...'``). Any
+    evidence not found in the resume is dropped: it cannot be trusted.
     """
     haystack = " ".join(resume_text.lower().split())
     kept = []
     for item in evidence:
-        needle = " ".join(item.strip().lower().split())
+        needle = " ".join(_strip_surrounding_quotes(item).lower().split())
         if needle and needle in haystack:
             kept.append(item.strip())
     return kept

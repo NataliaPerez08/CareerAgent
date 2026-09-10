@@ -153,10 +153,23 @@ def _build_model() -> BedrockModel:
         logger.warning("Invalid BEDROCK_TEMPERATURE value, falling back to 0.2")
         temperature = 0.2
 
+    # Bedrock applies a low dynamic default when maxTokens is omitted, which
+    # truncates long structured responses (the career plan) and makes Strands
+    # raise MaxTokensReachedException. Nova Micro supports up to 5K output
+    # tokens, so set it explicitly.
+    try:
+        max_tokens = int(os.getenv("BEDROCK_MAX_TOKENS", "5120"))
+        if max_tokens <= 0:
+            raise ValueError
+    except ValueError:
+        logger.warning("Invalid BEDROCK_MAX_TOKENS value, falling back to 5120")
+        max_tokens = 5120
+
     return BedrockModel(
         model_id=model_id,
         region_name=region,
         temperature=temperature,
+        max_tokens=max_tokens,
     )
 
 

@@ -17,7 +17,10 @@
       <div class="card">
         <div class="card-head">
           <h2>1 · Your resume</h2>
-          <button type="button" id="load-example" class="link">Load example</button>
+          <div class="card-actions">
+            <button type="button" id="load-example" class="link">Load example</button>
+            <button type="button" id="confirm-resume" class="link">Confirm resume</button>
+          </div>
         </div>
         <div class="tabs" role="tablist">
           <button type="button" id="tab-paste" class="tab active" role="tab" aria-selected="true">Paste text</button>
@@ -35,11 +38,13 @@
           <input type="file" id="resume-file" accept=".pdf,.txt">
           <p class="hint" id="file-name">No file selected</p>
         </div>
+        <p class="hint confirm-note" id="resume-confirmed" hidden></p>
       </div>
 
       <div class="card">
         <div class="card-head">
           <h2>2 · Job description</h2>
+          <button type="button" id="confirm-job" class="link">Confirm job</button>
         </div>
         <div class="url-row">
           <input type="url" id="job-url" spellcheck="false"
@@ -49,11 +54,13 @@
         <p class="hint" id="job-source" hidden></p>
         <textarea id="job-description" rows="15"
           placeholder="Paste the job posting here… or load it from the URL above (at least 20 characters)"></textarea>
+        <p class="hint confirm-note" id="job-confirmed" hidden></p>
       </div>
 
       <div class="card">
         <div class="card-head">
           <h2>Optional · Batch ranking</h2>
+          <button type="button" id="confirm-batch" class="link">Confirm batch</button>
         </div>
         <p class="hint">
           Compare several job URLs against your resume at once, then click one for the full analysis.
@@ -66,12 +73,13 @@
         <p class="hint" id="batch-note" hidden></p>
         <ul id="batch-result" class="batch-result" hidden></ul>
         <p class="hint" id="batch-error" hidden></p>
+        <p class="hint confirm-note" id="batch-confirmed" hidden></p>
       </div>
     </section>
 
     <div class="analyze-row">
       <button type="button" id="analyze" class="analyze">Analyze</button>
-      <p class="hint">Takes ~20–60 seconds. You can watch each step as the agent works.</p>
+      <p class="hint" id="analyze-hint">Takes ~20–60 seconds. You can watch each step as the agent works.</p>
     </div>
 
     <section class="card history" id="history">

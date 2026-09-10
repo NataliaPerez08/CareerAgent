@@ -157,6 +157,9 @@ footer { padding: 36px 20px 40px; color: #d9f2ee; font-size: 13px; }
 }
 .link:hover { background: var(--highlight); }
 .link:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(35, 32, 28, 0.35); }
+.link.confirmed { background: var(--good); color: var(--paper); }
+.card-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.confirm-note { color: var(--good); font-weight: 700; }
 
 .inputs {
   display: grid;
@@ -271,7 +274,8 @@ input[type="file"] {
 }
 .analyze:hover { background: #ffe066; transform: rotate(-1deg) translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
 .analyze:active { transform: rotate(-1deg) translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
-.analyze:disabled { opacity: 0.55; cursor: wait; }
+.analyze:disabled { opacity: 0.55; cursor: not-allowed; }
+.analyze.running:disabled { cursor: wait; }
 
 .status {
   display: flex;
