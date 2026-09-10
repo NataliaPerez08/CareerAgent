@@ -274,7 +274,7 @@ async function consumeStream(response) {
       const parsed = parseEvent(raw);
       if (!parsed) continue;
       if (parsed.type === "stage") {
-        setStage(parsed.data);
+        setStage(JSON.parse(parsed.data));
       } else if (parsed.type === "result") {
         renderResult(JSON.parse(parsed.data));
         return { ok: true };
