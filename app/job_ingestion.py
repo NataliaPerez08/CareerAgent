@@ -65,6 +65,7 @@ class JobPosting:
 MAX_RESPONSE_BYTES = int(os.getenv("JOB_FETCH_MAX_BYTES", "2000000"))
 TIMEOUT_SECONDS = float(os.getenv("JOB_FETCH_TIMEOUT_SECONDS", "10"))
 MIN_DESCRIPTION_CHARS = int(os.getenv("JOB_MIN_DESCRIPTION_CHARS", "20"))
+ALLOW_PRIVATE_HOSTS = os.getenv("JOB_FETCH_ALLOW_PRIVATE_HOSTS", "").lower() in {"1", "true", "yes"}
 USER_AGENT = "CareerAgent/1.0 (hackathon demo; polite fetching)"
 SCHEMES = ("http", "https")
 
@@ -147,7 +148,7 @@ def _validate_url(url: str):
     parsed = urlparse(url.strip())
     if parsed.scheme not in SCHEMES or not parsed.hostname:
         raise JobUrlError("Only http:// and https:// job URLs are supported.")
-    if _is_private_host(parsed.hostname):
+    if not ALLOW_PRIVATE_HOSTS and _is_private_host(parsed.hostname):
         raise JobUrlError("Job URLs pointing to private, loopback or internal hosts are rejected.")
     return parsed
 

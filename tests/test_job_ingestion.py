@@ -86,6 +86,17 @@ def test_fetch_rejects_loopback_and_private_hosts():
             job_ingestion.fetch_job(url, transport=None)
 
 
+def test_fetch_localhost_allowed_with_explicit_env_flag(monkeypatch):
+    """Demo site (demo/jobs) is served locally; the flag is opt-in only."""
+    monkeypatch.setattr(job_ingestion, "ALLOW_PRIVATE_HOSTS", True)
+    html = "<html><head><title>Demo</title></head><body><p>A demo posting text.</p></body></html>"
+    posting = job_ingestion.fetch_job(
+        "http://localhost:8001/jobs/demo.html",
+        transport=transport_responding(html.encode()),
+    )
+    assert posting.title == "Demo"
+
+
 def test_fetch_reports_timeout():
     def handler(request):
         raise httpx.ConnectTimeout("timed out")

@@ -261,6 +261,25 @@ aws configure     # credentials with Bedrock access (Nova Micro)
 make run          # http://127.0.0.1:8000/  → Load example → Analyze
 ```
 
+### Demo job board (local, offline)
+
+Record the demo without depending on live job sites or scraping: serve
+the bundled fake board `demo/` and let the API read `localhost` URLs:
+
+```bash
+python scripts/demo_job_site.py &                           # demo board on :8001
+JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 make run                    # API on :8000
+```
+
+`JOB_FETCH_ALLOW_PRIVATE_HOSTS=1` is a demo-only opt-in that relaxes the
+SSRF guard — it must never be set in a real deployment. Example URLs:
+
+```text
+http://127.0.0.1:8001/jobs/junior-backend.html      → good match (APPLY)
+http://127.0.0.1:8001/jobs/spa-data-science.html    → SPA with embedded JSON
+http://127.0.0.1:8001/jobs/senior-devops.html       → strict match (SKIP)
+```
+
 ## AWS setup
 
 CareerAgent talks to Amazon Bedrock through the Strands SDK using the

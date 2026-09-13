@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NovaJobs — Demo Job Board</title>
+  <meta name="description" content="Demo job board used to record the CareerAgent demo without external scraping.">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; }
+    .jobs { list-style: none; padding: 0; }
+    li { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; margin-bottom: 12px; }
+    a { color: #0b5; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>NovaJobs</h1>
+  <p>A local demo job board for the CareerAgent demo. Each posting is a plain
+    page on purpose — copy the link you need and feed it to
+    <code>/api/v1/jobs/fetch</code>.</p>
+  <ul class="jobs">
+    <li><a href="jobs/junior-backend.html">Junior Backend Engineer (server-rendered)</a></li>
+    <li><a href="jobs/spa-data-science.html">Data Scientist (SPA with embedded JSON)</a></li>
+    <li><a href="jobs/senior-devops.html">Senior DevOps Engineer (strict requirements)</a></li>
+  </ul>
+  <p id="job-source-note">Serve with <code>python scripts/demo_job_site.py</code> (default port 8001).</p>
+</body>
+</html>
