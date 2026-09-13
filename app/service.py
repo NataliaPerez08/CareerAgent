@@ -34,6 +34,7 @@ prompts.
 import logging
 from collections.abc import Callable
 
+import botocore.exceptions
 from strands import Agent
 
 from app.agent import build_pipeline_agent
@@ -208,13 +209,46 @@ def _record_model_call(
     timings.count("output_tokens", usage.get("outputTokens", 0) or 0)
 
 
+_RETRYABLE_MODEL_CODES = frozenset(
+    {
+        "throttlingException",
+        "modelStreamErrorException",
+        "serviceUnavailableException",
+        "internalServerError",
+    }
+)
+_MAX_MODEL_ATTEMPTS = 2
+
+
+def _call_model(agent: Agent, output_model, prompt: str):
+    """Run one structured model call; a single retry absorbs transient Bedrock errors."""
+    attempts = 0
+    while True:
+        attempts += 1
+        try:
+            return agent(prompt, structured_output_model=output_model)
+        except botocore.exceptions.EventStreamError:
+            if attempts >= _MAX_MODEL_ATTEMPTS:
+                raise
+            logger.warning(
+                "Transient Bedrock stream error (attempt %d); retrying once.", attempts
+            )
+        except botocore.exceptions.ClientError as exc:
+            code = exc.response.get("Error", {}).get("Code", "")
+            if code not in _RETRYABLE_MODEL_CODES or attempts >= _MAX_MODEL_ATTEMPTS:
+                raise
+            logger.warning(
+                "Retryable Bedrock error %r (attempt %d); retrying once.", code, attempts
+            )
+
+
 def _extract(
     agent: Agent,
     output_model,
     prompt: str,
     timings: EvaluationTimings | None = None,
 ):
-    result = agent(prompt, structured_output_model=output_model)
+    result = _call_model(agent, output_model, prompt)
     _record_model_call(timings, result, output_model=output_model)
     structured = result.structured_output
     if structured is None:

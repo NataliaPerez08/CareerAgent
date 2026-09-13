@@ -2,6 +2,9 @@ import json
 import logging
 from types import SimpleNamespace
 
+import botocore.exceptions
+import pytest
+
 from app import service
 from app.schemas import (
     CandidateProfile,
@@ -92,6 +95,33 @@ class FailingAgent:
         raise RuntimeError("model unavailable")
 
 
+class FlakyAgent(FakeAgent):
+    """Raises a transient Bedrock EventStreamError on the first model call."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, prompt, structured_output_model=None):
+        self.calls += 1
+        if self.calls == 1:
+            raise botocore.exceptions.EventStreamError(
+                {"message": "Model produced invalid sequence as part of ToolUse."},
+                "ConverseStream",
+            )
+        return super().__call__(prompt, structured_output_model)
+
+
+class AlwaysFlakyAgent(FakeAgent):
+    """Every attempt fails with a retryable Bedrock error."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, prompt, structured_output_model=None):
+        self.calls += 1
+        raise botocore.exceptions.EventStreamError({"message": "bad"}, "ConverseStream")
+
+
 def test_extract_candidate_profile_drops_invented_evidence(monkeypatch):
     monkeypatch.setattr(service, "build_pipeline_agent", lambda: FakeAgent())
 
@@ -100,6 +130,25 @@ def test_extract_candidate_profile_drops_invented_evidence(monkeypatch):
     assert profile.skills == ["Python", "REST API design and integration", "PostgreSQL", "Docker"]
     assert profile.years_of_experience == 2
     assert profile.evidence == ["2 years of professional software development experience"]
+
+
+def test_extract_retries_single_transient_stream_error(monkeypatch):
+    flaky = FlakyAgent()
+    monkeypatch.setattr(service, "build_pipeline_agent", lambda: flaky)
+
+    profile = service.extract_candidate_profile(RESUME)
+
+    assert profile.skills == ["Python", "REST API design and integration", "PostgreSQL", "Docker"]
+    assert flaky.calls == 2
+
+
+def test_extract_raises_after_retry_exhausted(monkeypatch):
+    flaky = AlwaysFlakyAgent()
+    monkeypatch.setattr(service, "build_pipeline_agent", lambda: flaky)
+
+    with pytest.raises(botocore.exceptions.EventStreamError):
+        service.extract_candidate_profile(RESUME)
+    assert flaky.calls == 2
 
 
 def test_extract_job_requirements_returns_structured(monkeypatch):
