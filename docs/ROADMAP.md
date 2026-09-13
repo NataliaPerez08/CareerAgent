@@ -693,8 +693,25 @@ Día 9  Regression Evals                  DONE-DETERMINISTIC (alta de 32→33 or
 Día 10 Demo freeze                        DONE (sin features nuevas; docs/DEMO.md: guion core < 3 min,
                                               SSE progress, history, checklist)
 Día 11 Submission                         DONE (fix SSE stage parse — el Analyze del browser caía con
-                                             error genérico desde el Día 5; restyle hand-drawn Y2K;
-                                             5 screenshots verificados; smoke remoto PASS: runtime
-                                             career_agent READY → APPLY/80/5 evidencias en ~14 s;
-                                             README Screenshots; docs/DEVPOST.md; tag v1.0)
+                                              error genérico desde el Día 5; restyle hand-drawn Y2K;
+                                              5 screenshots verificados; smoke remoto PASS: runtime
+                                              career_agent READY → APPLY/80/5 evidencias en ~14 s;
+                                              README Screenshots; docs/DEVPOST.md; tag v1.0)
+
+# Post-sprint (mantenimiento, sin features nuevas)
+
+```text
+Post-Día 11   Robustez Bedrock              DONE (retry 1x en app/service.py `_call_model` para
+                                             throttling / modelStreamError / service-unavailable /
+                                             server-errors de stream y tool-use inválido; tests
+                                             FlakyAgent/AlwaysFlakyAgent; README Features)
+Post-Día 11   Demo board local              DONE (scripts/demo_job_site.py sirve demo/jobs/* en
+                                             :8001; flag opcional JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 que
+                                             relaja el guard SSRF SOLO para localhost de demo —
+                                             documentado como demo-only; tests del flag; README
+                                             "Demo job board")
+```
+
+Al retirar batch ranking (Día 8) la suite quedó en **313 tests** (antes
+325 en Día 4; el dataset de evals pasó a 32 casos).
 ```

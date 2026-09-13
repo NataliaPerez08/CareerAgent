@@ -59,7 +59,7 @@ Deliberately not a 100% match: the point of the product is showing
 
 Hand-drawn Y2K desktop UI (captured from a live run against Bedrock):
 
-![Landing — desktop with the three input windows](docs/screenshots/01_landing.png)
+![Landing — the desktop resume and job windows](docs/screenshots/01_landing.png)
 
 *The desktop: resume window and job window, plus the OS taskbar.*
 
@@ -186,6 +186,10 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
   resume, extracting requirements, matching skills, preparing the
   recommendation, saving — instead of a dead spinner; model timeouts
   are reported explicitly as 504
+- **Transient Bedrock failures are retried** once (throttling, model
+  stream errors, service-unavailable and 5xx-style stream aborts, plus
+  invalid tool-use sequences from the model) before giving up with a
+  clear 502; covered by regression tests
 - **Recent evaluations**: the UI lists past runs (title, score,
   recommendation, age) from the existing persistence layer and reopens
   any stored evaluation with one click — no auth added
@@ -203,18 +207,16 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
 
 ## Evaluation
 
-Deterministic tier results from a concrete execution — **2026-09-07, 33
-cases (25 original + 8 regression cases added on sprint Day 9)** — not
-eternally hardcoded numbers. Re-run with `make eval` /
-`make eval-llm`:
+Deterministic tier results from a concrete execution — **2026-09-13, 32
+cases** (25 original + 7 regression cases added on the sprint; the eval
+dataset is re-run from code, not a hardcoded table).
 
 ```text
 Deterministic tier (no LLM, reproducible)
-Correct recommendation:      100% (33/33)
-Match exactness:             100% (33/33)
-Requirement classification:  100% (33/33)
-Evidence grounding:          100% (33/33)
-Batch ranking order:         100% (1/1)
+Correct recommendation:      100% (32/32)
+Match exactness:             100% (32/32)
+Requirement classification:  100% (32/32)
+Evidence grounding:          100% (32/32)
 Evidence hallucination:        0 fabricated items kept
 ```
 
@@ -240,11 +242,11 @@ timestamped). The LLM tier last executed on the 25-case dataset at
 temperature 0.2 measured 100% recall/precision, 96% requirement
 classification, 100% recommendations, 0 entity fabrications and 100%
 tool invocation (see [docs/MODEL_BENCHMARK.md](docs/MODEL_BENCHMARK.md)).
-The Day 9 re-run of the LLM tier against the expanded 33-case dataset
+The Day 9 re-run of the LLM tier against the expanded 32-case dataset
 was attempted but could not complete: Amazon Bedrock was degraded that
 window (per-call responses of 60+s, the documented transient service
 variance), so those metrics are **NOT RUN rather than fabricated**. The
-deterministic assertions for the 8 new regression cases are green.
+deterministic assertions for the 7 new regression cases are green.
 Registry and category coverage are continuously enforced by
 `tests/test_evals.py`.
 
@@ -388,7 +390,7 @@ and history.
 ## Tests
 
 ```bash
-make test      # 255 tests, no LLM calls (models mocked where relevant)
+make test      # 313 tests, no LLM calls (models mocked where relevant)
 make lint      # ruff
 ```
 
@@ -456,10 +458,14 @@ Honest ones:
 
 - **LLM run-to-run variance** at temperature 0.2 — recommendation
   correctness ranged 84–92% across our executions.
-- **Job URL loading is best-effort**: dynamic/JavaScript-rendered pages,
-  login walls and anti-bot systems often yield no usable description —
-  the UI then falls back to manual paste. Timeout, payload cap and an
-  SSRF guard (no private/loopback/link-local targets) keep fetching
+- **Job URL loading is best-effort**: we extract server-rendered text
+  and embedded job JSON (schema.org JobPosting JSON-LD and the data
+  script tags SPA boards ship), but pages that load the posting purely
+  via client-side XHR, plus login walls and anti-bot systems, still
+  yield no usable description — the UI then falls back to manual paste.
+  Timeout, payload cap and an SSRF guard (no
+  private/loopback/link-local targets; a documented `demo-only` flag
+  allows loopback for the bundled local demo board) keep fetching
   polite and safe; no anti-bot bypass is attempted.
 - **Nova Micro struggles with ambiguous requirements**: prose mentions
   ("you will work with Kubernetes") are sometimes classified as
@@ -491,8 +497,8 @@ there as *not built*.
 - Demo scenario & script: [`docs/DEMO.md`](docs/DEMO.md)
 - Video script: [`docs/VIDEO_SCRIPT.md`](docs/VIDEO_SCRIPT.md)
 - Devpost draft: [`docs/DEVPOST.md`](docs/DEVPOST.md)
-- Required screenshots: [`docs/screenshots/`](docs/screenshots/) — to be
-  captured from the running app (none are fabricated)
+- Required screenshots: [`docs/screenshots/`](docs/screenshots/) — five
+  verified captures from a live run (none are fabricated)
 
 ## License
 

@@ -69,7 +69,7 @@ VIDEO: <link>
 
 ### Evaluation
 
-33-case eval suite (`make eval`, deterministic, reproducible): 100%
+32-case eval suite (`make eval`, deterministic, reproducible): 100%
 recommendation correctness, 100% evidence grounding, 0 fabricated
 evidence. The LLM tier runs explicitly (`make eval-llm`) and is reported
 only when actually executed.
