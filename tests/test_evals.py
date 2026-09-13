@@ -5,7 +5,6 @@ from tests.evals.runner import (
     CATEGORIES,
     build_report,
     check_case_deterministic,
-    check_case_quick_rank,
     create_parser,
     load_cases,
     run_deterministic,
@@ -15,8 +14,8 @@ CASES = load_cases()
 CASE_IDS = [case["case_id"] for case in CASES]
 
 
-def test_dataset_covers_all_categories_with_33_cases():
-    assert len(CASES) == 33
+def test_dataset_covers_all_categories_with_32_cases():
+    assert len(CASES) == 32
     assert {case["category"] for case in CASES} == set(CATEGORIES)
     per_category: dict[str, int] = {}
     for case in CASES:
@@ -72,15 +71,6 @@ def test_deterministic_pipeline_matches_gold(case):
     assert not check.failures, f"{case['case_id']}: {check.failures}"
 
 
-BATCH_CASES = [case for case in CASES if "quick_rank" in case]
-
-
-@pytest.mark.parametrize("case", BATCH_CASES, ids=[c["case_id"] for c in BATCH_CASES])
-def test_quick_rank_cases_match_expected_order(case):
-    ok, failures = check_case_quick_rank(case)
-    assert ok, f"{case['case_id']}: {failures}"
-
-
 def test_deterministic_tier_meets_targets():
     metrics = run_deterministic()
     assert metrics["cases"] == len(CASES)
@@ -89,8 +79,6 @@ def test_deterministic_tier_meets_targets():
     assert metrics["classification_exact"] == len(CASES)
     assert metrics["evidence_grounded"] == len(CASES)
     assert metrics["hallucinated_evidence_kept"] == 0
-    assert metrics["quick_rank_total"] == len(BATCH_CASES)
-    assert metrics["quick_rank_correct"] == metrics["quick_rank_total"]
 
 
 def test_report_marks_unexecuted_llm_tier_as_not_run():

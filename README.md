@@ -61,8 +61,7 @@ Hand-drawn Y2K desktop UI (captured from a live run against Bedrock):
 
 ![Landing — desktop with the three input windows](docs/screenshots/01_landing.png)
 
-*The desktop: resume window, job window and the optional batch-ranking
-window, plus the OS taskbar.*
+*The desktop: resume window and job window, plus the OS taskbar.*
 
 ![Inputs loaded via Load example](docs/screenshots/02_loaded_inputs.png)
 
@@ -179,8 +178,9 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
   size, corrupt and scanned/image-only files rejected explicitly)
 - Job input as pasted text **or loaded from a public URL**
   (`POST /api/v1/jobs/fetch`): best-effort extraction of title, company
-  and description from page metadata, with graceful fallback to manual
-  paste when a page blocks automated reads
+  and description from page metadata **and embedded job JSON** (schema.org
+  JobPosting JSON-LD, or the data script tags SPA job boards ship), with
+  graceful fallback to manual paste when a page blocks automated reads
 - **Live progress while analyzing** (`POST /api/v1/evaluations/stream`,
   SSE): the UI shows each real pipeline stage as it happens — reading
   resume, extracting requirements, matching skills, preparing the
@@ -189,10 +189,6 @@ Python 3.11+ · Strands Agents SDK · Amazon Bedrock (Amazon Nova Micro)
 - **Recent evaluations**: the UI lists past runs (title, score,
   recommendation, age) from the existing persistence layer and reopens
   any stored evaluation with one click — no auth added
-- **Batch ranking** (`POST /api/v1/batch/quick-ranking`): paste up to 10
-  job URLs and get a cheap, deterministic ranking against your resume
-  (one model call for the profile, no per-job LLM analysis). Click a row
-  in the UI to run the full deep analysis on that job
 - Structured `EvaluationResult` contract across CLI, API and UI
 - Skill **normalization**: aliases (`postgres` → `postgresql`,
   `cicd` → `ci/cd`, `cpp` → `c++`, `rest api development` →
@@ -222,12 +218,12 @@ Batch ranking order:         100% (1/1)
 Evidence hallucination:        0 fabricated items kept
 ```
 
-The eval suite ([`tests/evals/`](tests/evals/)) covers 33 cases: the 8
+The eval suite ([`tests/evals/`](tests/evals/)) covers 32 cases: the 8
 original categories (strong/weak match, missing required/preferred
 skills, junior-vs-senior experience gates, ambiguous requirements,
 skill aliases, irrelevant experience) plus regression cases for URL
 ingestion, alias coverage (`cicd`/`cpp`), the optimized single-shot
-pipeline, a model-switch guard, fabricated evidence and batch ranking.
+pipeline, a model-switch guard and fabricated evidence.
 Cases include **hallucination probes** — plausible-but-absent resume
 claims that the evidence validator must drop.
 

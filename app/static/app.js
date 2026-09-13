@@ -70,12 +70,11 @@ const result = el("result");
 
 // Confirmation state: each input must be explicitly confirmed before it can
 // be used by Analyze / Rank jobs. Editing an input invalidates its snapshot.
-const confirmed = { resume: null, job: null, batch: null };
+const confirmed = { resume: null, job: null };
 
 const CONFIRM = {
   resume: { btn: el("confirm-resume"), note: el("resume-confirmed"), label: "Confirm resume" },
   job: { btn: el("confirm-job"), note: el("job-confirmed"), label: "Confirm job" },
-  batch: { btn: el("confirm-batch"), note: el("batch-confirmed"), label: "Confirm batch" },
 };
 
 let uploadMode = false;
@@ -302,27 +301,10 @@ function confirmJob() {
   return true;
 }
 
-function confirmBatch() {
-  const urls = jobUrlsMulti.value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 10);
-  if (!urls.length) {
-    showError("Paste at least one job URL (one per line), then confirm.");
-    return false;
-  }
-  confirmed.batch = urls;
-  markConfirmed("batch", `${urls.length} job URL${urls.length === 1 ? "" : "s"} confirmed`);
-  return true;
-}
-
 function updateActions() {
   const resumeOk = Boolean(confirmed.resume);
   const jobOk = Boolean(confirmed.job);
-  const batchOk = Boolean(confirmed.resume && confirmed.resume.mode === "paste" && confirmed.batch);
   analyzeBtn.disabled = !(resumeOk && jobOk);
-  rankJobsBtn.disabled = !batchOk;
   const hint = el("analyze-hint");
   if (resumeOk && jobOk) {
     hint.textContent = "Takes ~20–60 seconds. You can watch each step as the agent works.";
@@ -650,106 +632,10 @@ analyzeBtn.addEventListener("click", async () => {
 
 loadHistory();
 
-const API_BATCH_RANK = "/api/v1/batch/quick-ranking";
-const jobUrlsMulti = el("job-urls-multi");
-const rankJobsBtn = el("rank-jobs");
-const batchResult = el("batch-result");
-const batchNote = el("batch-note");
-const batchError = el("batch-error");
-
-function batchRow(item, index) {
-  const li = document.createElement("li");
-  li.className = "batch-row";
-
-  const verdict = document.createElement("span");
-  verdict.className = `badge ${item.recommendation.toLowerCase()}`;
-  verdict.textContent = item.recommendation;
-
-  const title = document.createElement("div");
-  title.className = "batch-title";
-  title.textContent = `${index}. ${item.title || "Untitled job"}`;
-  if (item.company) title.textContent += ` · ${item.company}`;
-
-  const meta = document.createElement("span");
-  meta.className = "batch-meta";
-  if (item.error) {
-    meta.textContent = `Error: ${item.error}`;
-  } else {
-    const total = (item.matched_skills || []).length + (item.missing_skills || []).length;
-    meta.textContent = total
-      ? `${(item.matched_skills || []).length} of ${total} of your skills are mentioned`
-      : "No skills to compare";
-  }
-
-  const score = document.createElement("span");
-  score.className = "batch-score";
-  score.textContent = item.error ? "—" : `${item.score}%`;
-
-  li.append(verdict, title, meta, score);
-
-  if (!item.error) {
-    li.classList.add("clickable");
-    li.title = "Analyze this job in depth";
-    li.addEventListener("click", async () => {
-      jobUrl.value = item.url;
-      result.hidden = true;
-      jobDescription.value = "";
-      const loaded = await loadJobFromUrl(item.url);
-      if (loaded && confirmJob()) analyzeBtn.click();
-    });
-  }
-  return li;
-}
-
-rankJobsBtn.addEventListener("click", async () => {
-  batchError.hidden = true;
-
-  if (!confirmed.resume || confirmed.resume.mode !== "paste") {
-    batchError.textContent = "Confirm your resume in the 'Paste text' tab before ranking jobs.";
-    batchError.hidden = false;
-    return;
-  }
-  if (!confirmed.batch) {
-    batchError.textContent = "Confirm the job URLs first, then rank.";
-    batchError.hidden = false;
-    return;
-  }
-
-  rankJobsBtn.disabled = true;
-  batchResult.hidden = true;
-  batchNote.hidden = false;
-  batchNote.textContent = "Ranking… one quick model call, a few seconds.";
-  try {
-    const response = await fetch(API_BATCH_RANK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_text: confirmed.resume.text, job_urls: confirmed.batch }),
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok) {
-      showError(formatApiError(data, response.status));
-      batchNote.hidden = true;
-      return;
-    }
-    batchNote.textContent = data.note || "";
-    batchResult.hidden = false;
-    batchResult.innerHTML = "";
-    data.jobs.forEach((item, index) => batchResult.appendChild(batchRow(item, index + 1)));
-  } catch {
-    batchNote.hidden = true;
-    batchError.textContent = "Could not reach the CareerAgent server. Is it still running?";
-    batchError.hidden = false;
-  } finally {
-    updateActions();
-  }
-});
-
 resumeText.addEventListener("input", () => invalidateConfirm("resume"));
 jobDescription.addEventListener("input", () => invalidateConfirm("job"));
-jobUrlsMulti.addEventListener("input", () => invalidateConfirm("batch"));
 
 CONFIRM.resume.btn.addEventListener("click", confirmResume);
 CONFIRM.job.btn.addEventListener("click", confirmJob);
-CONFIRM.batch.btn.addEventListener("click", confirmBatch);
 
 updateActions();

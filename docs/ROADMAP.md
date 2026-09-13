@@ -673,21 +673,25 @@ con medición antes/después. Detalles en
 Día 1  Instrumentación de latencia      DONE (243 tests)
 Día 2  3 calls, 0 tools, counters       DONE (254 tests; real: 4.49 s p50)
 Día 3  Benchmark de modelos             DONE (Micro > Lite; docs/MODEL_BENCHMARK.md)
-Día 4  Ingestión de vacante por URL     DONE (273 tests; POST /api/v1/jobs/fetch + UI)
+Día 4  Ingestión de vacante por URL     DONE (325 tests; POST /api/v1/jobs/fetch + UI;
+                                           extracción además desde JSON embebido: JSON-LD
+                                           JobPosting y scripts de datos de SPAs como Phenom)
 Día 5  UX del flujo                     DONE (279 tests; SSE progress stages + timeout 504)
 Día 6  Historial                         DONE (recent evaluations UI; click opens stored result)
 Día 7  AgentCore session/warm-path       DONE (--warm-path probe: no significant warm-up
                                              → session reuse STOPPED; docs/MODEL_BENCHMARK.md)
-Día 8  Batch ranking MVP                 DONE (POST /api/v1/batch/quick-ranking: deterministic
-                                             rank of up to 10 job URLs, clickable rows → deep analysis)
-Día 9  Regression Evals                  DONE-DETERMINISTIC (33 cases: +8 regresión — URL
-                                             ingestion, ci/cd+cpp aliases, pipeline single-shot,
-                                             model-switch guard, fabricated evidence, batch ranking)
-                                             → `make eval` verde 33/33. `make eval-llm`: intentado,
+Día 8  Batch ranking MVP                 DONE, RETIRADO POST-v1.0 (POST /api/v1/batch/quick-ranking
+                                             eliminado a petición del usuario; UI, módulo, schemas y
+                                             tests limpiados)
+Día 9  Regression Evals                  DONE-DETERMINISTIC (alta de 32→33 originales; hoy 32 tras
+                                              retirar batch_ranking: URL ingestion, ci/cd+cpp aliases,
+                                              pipeline single-shot, model-switch guard,
+                                              fabricated evidence)
+                                              → `make eval` verde. `make eval-llm`: intentado,
                                              Bedrock degradado (calls 60s+), métricas NO ejecutadas
                                              → reportadas como NOT RUN, no fabricadas. Re-run pendiente.
 Día 10 Demo freeze                        DONE (sin features nuevas; docs/DEMO.md: guion core < 3 min,
-                                             SSE progress, history, batch ranking opcional, checklist)
+                                              SSE progress, history, checklist)
 Día 11 Submission                         DONE (fix SSE stage parse — el Analyze del browser caía con
                                              error genérico desde el Día 5; restyle hand-drawn Y2K;
                                              5 screenshots verificados; smoke remoto PASS: runtime

@@ -28,7 +28,6 @@ from sqlalchemy.orm import Session
 
 from app import job_ingestion
 from app.db import get_session, get_session_factory, run_migrations
-from app.quick_rank import MAX_QUICK_JOBS, fetch_and_rank
 from app.repository import (
     get_evaluation,
     list_evaluations,
@@ -42,12 +41,8 @@ from app.resume_parser import (
     max_resume_size_bytes,
     parse_resume,
 )
-from app.schemas import EvaluationResult, QuickRankingResult
-from app.service import (
-    evaluate_candidate,
-    evaluate_resume_file,
-    extract_candidate_profile,
-)
+from app.schemas import EvaluationResult
+from app.service import evaluate_candidate, evaluate_resume_file
 from app.timing import EvaluationTimings
 
 logger = logging.getLogger(__name__)
@@ -109,13 +104,6 @@ class JobFetchResponse(BaseModel):
     company: str = ""
     description: str
     source_url: str
-
-
-class QuickRankingRequest(BaseModel):
-    """Rank several job URLs against one resume (cheap, single model call)."""
-
-    resume_text: str = Field(min_length=20, max_length=MAX_TEXT_LENGTH)
-    job_urls: list[str] = Field(min_length=1, max_length=MAX_QUICK_JOBS)
 
 
 RESUME_FILE = File(...)
@@ -220,24 +208,6 @@ def fetch_job_posting(request: JobFetchRequest) -> JobFetchResponse:
         description=posting.description,
         source_url=posting.source_url,
     )
-
-
-@app.post(
-    f"{API_V1}/batch/quick-ranking",
-    response_model=QuickRankingResult,
-    tags=["jobs"],
-    summary="Quick-rank multiple job postings by URL",
-)
-def quick_rank_jobs(request: QuickRankingRequest) -> QuickRankingResult:
-    """Rank job URLs against the candidate without a deep analysis.
-
-    Costs exactly one model call (candidate profile extraction). Each job
-    is ranked deterministically from the text fetched at its URL. Select
-    one job afterwards for the deep evaluation via the evaluation
-    endpoints. A failing URL becomes an error row, never a failed batch.
-    """
-    profile = extract_candidate_profile(request.resume_text)
-    return fetch_and_rank(profile, request.job_urls)
 
 
 @app.post(

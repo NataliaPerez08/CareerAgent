@@ -1,16 +1,11 @@
 """Pydantic schemas for the structured evaluation contract."""
 
-from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 Recommendation = Literal["APPLY", "MAYBE", "SKIP"]
 SkillSeverity = Literal["critical", "required", "preferred"]
-
-
-def _utcnow() -> datetime:
-    return datetime.now(UTC)
 
 
 class CandidateProfile(BaseModel):
@@ -94,25 +89,3 @@ class EvaluationResult(BaseModel):
     interview_topics: list[str] = Field(default_factory=list)
     preparation_plan: list[str] = Field(default_factory=list)
     reasoning: str = ""
-
-
-class QuickRankingJob(BaseModel):
-    """One shallow-ranked job posting from the batch endpoint."""
-
-    url: str
-    title: str = ""
-    company: str = ""
-    score: int = Field(default=0, ge=0, le=100)
-    recommendation: Recommendation = "SKIP"
-    matched_skills: list[str] = Field(default_factory=list)
-    missing_skills: list[str] = Field(default_factory=list)
-    error: str | None = None
-
-
-class QuickRankingResult(BaseModel):
-    """Cheap ranking of several jobs against one candidate profile."""
-
-    candidate_skills: list[str] = Field(default_factory=list)
-    generated_at: datetime = Field(default_factory=_utcnow)
-    jobs: list[QuickRankingJob] = Field(default_factory=list)
-    note: str = ""
