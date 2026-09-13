@@ -124,6 +124,80 @@ def test_fetch_rejects_oversized_page(monkeypatch):
         )
 
 
+def test_fetch_extracts_job_from_embedded_json():
+    """SPA-style page: the posting lives in a data script tag (Phenom-style)."""
+    html = """
+    <html><head>
+      <meta property="og:title" content="Technical Services Engineer">
+      <meta property="og:site_name" content="MongoDB">
+      <meta property="og:description" content="Mexico City">
+      <title>Technical Services Engineer</title>
+    </head><body>
+      <script id="data-job" type="text/template">
+        {"id": 8055356, "title": "Technical Services Engineer",
+         "location": {"name": "Mexico City"},
+         "content": "<p>Advise customers on complex MongoDB problems.</p>\\n<h3>Cool things you'll do</h3>\\n<p>Combine MongoDB expertise with teamwork.</p>"}
+      </script>
+      <script type="application/ld+json">{"@type": "MongoDB", "url": "https://x"}</script>
+    </body></html>
+    """
+    posting = job_ingestion.fetch_job(
+        "https://www.mongodb.com/careers/jobs/8055356",
+        transport=transport_responding(html.encode()),
+    )
+    assert posting.title == "Technical Services Engineer"
+    assert posting.company == "MongoDB"
+    assert "Advise customers on complex MongoDB problems." in posting.description
+    assert "Cool things you'll do" in posting.description
+
+
+def test_fetch_extracts_json_ld_job_posting():
+    """schema.org JobPosting JSON-LD (Greenhouse/Lever/Workday style)."""
+    html = """
+    <html><head><title>Platform Engineer</title></head><body>
+      <script type="application/ld+json">
+        {"@type": "JobPosting", "title": "Platform Engineer",
+         "hiringOrganization": {"name": "Acme Corp"},
+         "description": "<p>Own our CI/CD with Docker and Kubernetes.</p>"}
+      </script>
+    </body></html>
+    """
+    posting = job_ingestion.fetch_job(
+        "https://example.com/jobs/42",
+        transport=transport_responding(html.encode()),
+    )
+    assert posting.title == "Platform Engineer"
+    assert posting.company == "Acme Corp"
+    assert "Docker and Kubernetes" in posting.description
+
+
+def test_fetch_ignores_broken_json_and_falls_back_to_body():
+    html = (
+        "<html><head><title>Backend</title></head><body>"
+        "<script type='text/template'>{not valid json</script>"
+        "<p>We need a backend developer with Python and SQL experience "
+        "to build our internal tooling platform.</p></body></html>"
+    )
+    posting = job_ingestion.fetch_job(
+        "https://example.com/jobs/7",
+        transport=transport_responding(html.encode()),
+    )
+    assert "Python" in posting.description
+
+
+def test_fetch_rejects_json_title_without_description():
+    html = (
+        '<html><head><title>Job</title></head><body>'
+        '<script type="application/json">{"title": "Just a title"}</script>'
+        "</body></html>"
+    )
+    with pytest.raises(job_ingestion.JobEmptyError):
+        job_ingestion.fetch_job(
+            "https://example.com/jobs/8",
+            transport=transport_responding(html.encode()),
+        )
+
+
 def test_page_metadata_wins_over_body():
     posting = job_ingestion.fetch_job(
         "https://jobs.acme.com/senior-backend",
