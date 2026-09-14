@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CareerAgent">
+  <!-- sketchbook panel: teal background with ink wobble border -->
+  <path d="M6 22 C14 17, 20 9 31 8 C43 7, 51 12 57 19 C62 25, 60 33 59 40 C58 47, 54 55 45 57 C36 59 27 56 19 54 C12 52 5 47 6 38 C7 31 4 25 6 22 Z"
+        fill="#0e7c86" stroke="#23201c" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- cream paper card -->
+  <path d="M14 21 C18 19, 21 17 28 17 C37 17, 46 18 50 21 C53 23 54 27 53 34 C52 42 49 47 42 48 C35 49 26 47 19 45 C14 43 11 39 12 32 C13 26 11 22 14 21 Z"
+        fill="#fbf7ea" stroke="#23201c" stroke-width="2.2" stroke-linejoin="round"/>
+
+  <!-- hand-drawn slash -->
+  <path d="M31 20 C32 30, 33 38, 33 46" fill="none" stroke="#23201c" stroke-width="4.2" stroke-linecap="round"/>
+  <path d="M31 20 C32 30, 33 38, 33 46" fill="none" stroke="#e64980" stroke-width="1.6" stroke-linecap="round"
+        transform="translate(1.6 1.4)" opacity="0.9"/>
+
+  <!-- percent circles -->
+  <circle cx="25.5" cy="24.5" r="5.3" fill="#23201c"/>
+  <circle cx="25.5" cy="24.5" r="5.3" fill="none" stroke="#e64980" stroke-width="1.6" transform="translate(1.4 1.2)"/>
+  <circle cx="38.5" cy="42.5" r="5.3" fill="#23201c"/>
+  <circle cx="38.5" cy="42.5" r="5.3" fill="none" stroke="#ffd43b" stroke-width="1.6" transform="translate(-1.4 -1.2)"/>
+</svg>
