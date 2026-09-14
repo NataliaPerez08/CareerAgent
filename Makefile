@@ -1,4 +1,4 @@
-.PHONY: install dev test lint format run cli demo-site demo-spa costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy agentcore-role eval eval-llm benchmark benchmark-mock
+.PHONY: install dev test lint format run cli demo-site demo-run demo-spa costs migrate docker-build docker-run compose-up compose-down agentcore-run agentcore-zip agentcore-deploy agentcore-role eval eval-llm benchmark benchmark-mock
 
 install:
 	python -m pip install -e .
@@ -26,6 +26,13 @@ cli:
 
 demo-site:
 	python scripts/demo_job_site.py
+
+demo-run:
+	python scripts/demo_job_site.py >/dev/null 2>&1 & \
+	site_pid=$$!; \
+	trap 'kill $$site_pid 2>/dev/null || true' EXIT; \
+	sleep 1; \
+	JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 uvicorn app.main:app --reload
 
 demo-spa:
 	python scripts/demo_job_site.py >/dev/null 2>&1 & \

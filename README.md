@@ -266,12 +266,15 @@ make run          # http://127.0.0.1:8000/  → Load example → Analyze
 ### Demo job board (local, offline)
 
 Record the demo without depending on live job sites or scraping: serve
-the bundled fake board `demo/` and let the API read `localhost` URLs:
+the bundled fake board `demo/` and let the API read `localhost` URLs.
+One command starts both the board and the API with the demo-only flag:
 
 ```bash
-python scripts/demo_job_site.py &                           # demo board on :8001
-JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 make run                    # API on :8000
+make demo-run       # board on :8001 + API on :8000 (http://127.0.0.1:8000/)
 ```
+
+(Equivalently: `python scripts/demo_job_site.py &` then
+`JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 make run`.)
 
 `JOB_FETCH_ALLOW_PRIVATE_HOSTS=1` is a demo-only opt-in that relaxes the
 SSRF guard — it must never be set in a real deployment. Example URLs:

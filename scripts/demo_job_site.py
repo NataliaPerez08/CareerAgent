@@ -31,7 +31,8 @@ def main() -> None:
     with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
         print(f"Demo job board at http://127.0.0.1:{args.port} (serving {DEMO_DIR})")
         print(f"Index: http://127.0.0.1:{args.port}/")
-        print("Remember: the API must run with JOB_FETCH_ALLOW_PRIVATE_HOSTS=1")
+        print("Point the API at this board with `make demo-run` "
+              "(starts the API with JOB_FETCH_ALLOW_PRIVATE_HOSTS=1).")
         try:
             server.serve_forever()
         except KeyboardInterrupt:

@@ -66,9 +66,11 @@ Show the **URL flow** against the bundled local demo board (offline,
 no anti-bot surprises — a good fallback if the real internet is slow):
 
 ```bash
-python scripts/demo_job_site.py &                  # :8001 serves demo/jobs/*.html
-JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 make run           # :8000 API with the demo-only flag
+make demo-run                                      # board :8001 + API :8000 with the demo-only flag
 ```
+
+(Or, step by step: `python scripts/demo_job_site.py &` then
+`JOB_FETCH_ALLOW_PRIVATE_HOSTS=1 make run`.)
 
 In the UI: paste `http://127.0.0.1:8001/jobs/spa-data-science.html`
 → the SPA-style page (embedded JSON) is extracted → Analyze.

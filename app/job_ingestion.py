@@ -149,7 +149,12 @@ def _validate_url(url: str):
     if parsed.scheme not in SCHEMES or not parsed.hostname:
         raise JobUrlError("Only http:// and https:// job URLs are supported.")
     if not ALLOW_PRIVATE_HOSTS and _is_private_host(parsed.hostname):
-        raise JobUrlError("Job URLs pointing to private, loopback or internal hosts are rejected.")
+        raise JobUrlError(
+            "Job URLs must point to public hosts; private, loopback or "
+            "internal hosts are blocked (SSRF guard). To read the local "
+            "demo board, start the API with `make demo-run` (sets "
+            "JOB_FETCH_ALLOW_PRIVATE_HOSTS=1, demo only)."
+        )
     return parsed
 
 

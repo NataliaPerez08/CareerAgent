@@ -82,8 +82,9 @@ def test_fetch_rejects_url_without_host():
 def test_fetch_rejects_loopback_and_private_hosts():
     for url in ("http://localhost/jobs/1", "http://127.0.0.1/jobs/1",
                 "http://192.168.0.5/jobs/1", "http://10.0.0.5/jobs/1"):
-        with pytest.raises(job_ingestion.JobUrlError):
+        with pytest.raises(job_ingestion.JobUrlError) as exc_info:
             job_ingestion.fetch_job(url, transport=None)
+        assert "JOB_FETCH_ALLOW_PRIVATE_HOSTS" in str(exc_info.value)
 
 
 def test_fetch_localhost_allowed_with_explicit_env_flag(monkeypatch):
