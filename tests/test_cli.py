@@ -1,6 +1,8 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 from app import cli
+from app.job_ingestion import JobFetchError
 from app.schemas import EvaluationResult
 from tests.pdfgen import make_pdf
 
@@ -104,3 +106,38 @@ def test_cli_chat_mode_uses_passed_files(monkeypatch, tmp_path):
 
     assert "Python." in captured["resume"]
     assert "Requires Python" in captured["job"]
+
+
+def test_cli_job_url_fetches_job_description(monkeypatch, capsys):
+    captured = {}
+
+    def fake_fetch_job(url):
+        captured["url"] = url
+        return SimpleNamespace(description="Data Scientist\n\nRequires SQL and Python.")
+
+    def fake_evaluate(resume, job_description):
+        return EvaluationResult(recommendation="APPLY", score=100)
+
+    monkeypatch.setattr(cli, "evaluate_candidate", fake_evaluate)
+    monkeypatch.setattr(cli, "fetch_job", fake_fetch_job)
+
+    cli.main(["--job-url", "http://127.0.0.1:8001/jobs/spa-data-science.html"])
+
+    assert captured["url"] == "http://127.0.0.1:8001/jobs/spa-data-science.html"
+    assert '"recommendation": "APPLY"' in capsys.readouterr().out
+
+
+def test_cli_job_url_error_exits_with_message(monkeypatch, capsys):
+    def fake_fetch_job(url):
+        raise JobFetchError("page too large to ingest")
+
+    monkeypatch.setattr(cli, "fetch_job", fake_fetch_job)
+
+    try:
+        cli.main(["--job-url", "http://127.0.0.1:8001/jobs/too-big.html"])
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("expected SystemExit for a failing job URL")
+
+    assert "page too large" in capsys.readouterr().out

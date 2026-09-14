@@ -331,7 +331,10 @@ make test
 ```bash
 make cli                                  # demo pair: examples/demo_*.txt
 python -m app.cli cv.pdf job.txt          # real files (PDF or TXT)
+python -m app.cli --job-url https://…     # fetch the job from a URL instead of a file
 python -m app.cli --chat                  # Strands agent, 5-tool free loop
+make demo-site                            # serve the demo job board on :8001
+make demo-spa                             # serve demo board + evaluate SPA job in one go
 ```
 
 ### Web UI / API

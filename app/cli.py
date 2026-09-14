@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from app.agent import run_agent_workflow
+from app.job_ingestion import JobFetchError, fetch_job
 from app.resume_parser import parse_resume
 from app.service import evaluate_candidate
 
@@ -25,6 +26,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to a job description text file. Defaults to examples/demo_job.txt.",
     )
     parser.add_argument(
+        "--job-url",
+        default=None,
+        help="Fetch the job description from a URL instead of a file.",
+    )
+    parser.add_argument(
         "--chat",
         action="store_true",
         help=(
@@ -39,10 +45,21 @@ def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
 
     resume_path = Path(args.resume) if args.resume else ROOT / "examples" / "demo_resume.txt"
-    job_path = Path(args.job) if args.job else ROOT / "examples" / "demo_job.txt"
 
     resume_text = parse_resume(resume_path.read_bytes(), resume_path.name)
-    job_text = job_path.read_text()
+
+    if args.job_url:
+        try:
+            job_text = fetch_job(args.job_url).description
+        except JobFetchError as exc:
+            msg = str(exc).strip()
+            if not msg:
+                msg = exc.__class__.__name__
+            print(f"Job URL error: {msg}")
+            raise SystemExit(2) from exc
+    else:
+        job_path = Path(args.job) if args.job else ROOT / "examples" / "demo_job.txt"
+        job_text = job_path.read_text()
 
     if args.chat:
         print(run_agent_workflow(resume_text, job_text))
